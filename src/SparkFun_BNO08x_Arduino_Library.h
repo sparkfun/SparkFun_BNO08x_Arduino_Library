@@ -103,7 +103,7 @@ const byte CHANNEL_GYRO = 5;
 #define SENSOR_REPORTID_GEOMAGNETIC_ROTATION_VECTOR 0x09
 #define SENSOR_REPORTID_GYRO_INTEGRATED_ROTATION_VECTOR 0x2A
 #define SENSOR_REPORTID_TAP_DETECTOR 0x10
-#define SENSOR_REPORTID_STEP_COUNTER 0x11
+#define SENSOR_REPORTID_STEP_COUNTER SH2_STEP_COUNTER
 #define SENSOR_REPORTID_STABILITY_CLASSIFIER 0x13
 #define SENSOR_REPORTID_RAW_ACCELEROMETER 0x14
 #define SENSOR_REPORTID_RAW_GYROSCOPE 0x15
@@ -205,7 +205,7 @@ public:
 	bool enableUncalibratedGyro(uint16_t timeBetweenReports);
 	bool enableMagnetometer(uint16_t timeBetweenReports = 10);
 	bool enableTapDetector(uint16_t timeBetweenReports);
-	bool enableStepCounter(uint16_t timeBetweenReports);
+	bool enableStepCounter(uint16_t timeBetweenReports = 10);
 	bool enableStabilityClassifier(uint16_t timeBetweenReports);
 	void enableActivityClassifier(uint16_t timeBetweenReports, uint32_t activitiesToEnable, uint8_t (&activityConfidences)[9]);
 	bool enableRawAccelerometer(uint16_t timeBetweenReports);

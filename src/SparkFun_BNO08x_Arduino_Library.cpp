@@ -884,7 +884,7 @@ uint8_t BNO08x::getTapDetector()
 //Return the step count
 uint16_t BNO08x::getStepCount()
 {
-	return (stepCount);
+	return _sensor_value->un.stepCounter.steps;
 }
 
 //Return the stability classifier
