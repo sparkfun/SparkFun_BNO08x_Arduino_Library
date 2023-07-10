@@ -63,10 +63,10 @@
 //I2C_BUFFER_LENGTH is defined in Wire.H
 #define I2C_BUFFER_LENGTH 32
 
-#else
+//#else
 
 //The catch-all default is 32
-#define I2C_BUFFER_LENGTH 32
+//#define I2C_BUFFER_LENGTH 32
 
 #endif
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -93,7 +93,7 @@ const byte CHANNEL_GYRO = 5;
 //All the different sensors and features we can get reports from
 //These are used when enabling a given sensor
 #define SENSOR_REPORTID_ACCELEROMETER SH2_ACCELEROMETER
-#define SENSOR_REPORTID_GYROSCOPE 0x02
+#define SENSOR_REPORTID_GYROSCOPE_CALIBRATED SH2_GYROSCOPE_CALIBRATED
 #define SENSOR_REPORTID_MAGNETIC_FIELD 0x03
 #define SENSOR_REPORTID_LINEAR_ACCELERATION 0x04
 #define SENSOR_REPORTID_ROTATION_VECTOR SH2_ROTATION_VECTOR
@@ -201,7 +201,7 @@ public:
 	bool enableAccelerometer(uint16_t timeBetweenReports = 10);
 	bool enableLinearAccelerometer(uint16_t timeBetweenReports);
 	bool enableGravity(uint16_t timeBetweenReports);
-	bool enableGyro(uint16_t timeBetweenReports);
+	bool enableGyro(uint16_t timeBetweenReports = 10);
 	bool enableUncalibratedGyro(uint16_t timeBetweenReports);
 	bool enableMagnetometer(uint16_t timeBetweenReports);
 	bool enableTapDetector(uint16_t timeBetweenReports);

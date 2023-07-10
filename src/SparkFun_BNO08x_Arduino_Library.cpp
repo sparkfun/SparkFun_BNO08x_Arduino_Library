@@ -333,7 +333,7 @@ uint16_t BNO08x::parseInputReport(void)
 		rawLinAccelY = data2;
 		rawLinAccelZ = data3;
 	}
-	else if (shtpData[5] == SENSOR_REPORTID_GYROSCOPE)
+	else if (shtpData[5] == SENSOR_REPORTID_GYROSCOPE_CALIBRATED)
 	{	
 		gyroAccuracy = status;
 		rawGyroX = data1;
@@ -698,22 +698,19 @@ void BNO08x::getGyro(float &x, float &y, float &z, uint8_t &accuracy)
 //Return the gyro component
 float BNO08x::getGyroX()
 {
-	float gyro = qToFloat(rawGyroX, gyro_Q1);
-	return (gyro);
+	return _sensor_value->un.gyroscope.x;
 }
 
 //Return the gyro component
 float BNO08x::getGyroY()
 {
-	float gyro = qToFloat(rawGyroY, gyro_Q1);
-	return (gyro);
+	return _sensor_value->un.gyroscope.y;
 }
 
 //Return the gyro component
 float BNO08x::getGyroZ()
 {
-	float gyro = qToFloat(rawGyroZ, gyro_Q1);
-	return (gyro);
+	return _sensor_value->un.gyroscope.z;
 }
 
 //Return the gyro component
@@ -1265,7 +1262,7 @@ bool BNO08x::enableGravity(uint16_t timeBetweenReports)
 bool BNO08x::enableGyro(uint16_t timeBetweenReports)
 {
 	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
-	return enableReport(SENSOR_REPORTID_GYROSCOPE, timeBetweenReports);		
+	return enableReport(SENSOR_REPORTID_GYROSCOPE_CALIBRATED, timeBetweenReports);		
 }
 
 //Sends the packet to enable the uncalibrated gyro
