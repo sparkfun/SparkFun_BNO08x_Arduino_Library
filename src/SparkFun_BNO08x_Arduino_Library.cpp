@@ -822,28 +822,25 @@ void BNO08x::getMag(float &x, float &y, float &z, uint8_t &accuracy)
 //Return the magnetometer component
 float BNO08x::getMagX()
 {
-	float mag = qToFloat(rawMagX, magnetometer_Q1);
-	return (mag);
+	return _sensor_value->un.magneticField.x;
 }
 
 //Return the magnetometer component
 float BNO08x::getMagY()
 {
-	float mag = qToFloat(rawMagY, magnetometer_Q1);
-	return (mag);
+	return _sensor_value->un.magneticField.y;
 }
 
 //Return the magnetometer component
 float BNO08x::getMagZ()
 {
-	float mag = qToFloat(rawMagZ, magnetometer_Q1);
-	return (mag);
+	return _sensor_value->un.magneticField.z;
 }
 
 //Return the mag component
 uint8_t BNO08x::getMagAccuracy()
 {
-	return (magAccuracy);
+	return _sensor_value->status;
 }
 
 //Gets the full high rate gyro vector

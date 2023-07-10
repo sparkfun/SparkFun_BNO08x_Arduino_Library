@@ -94,7 +94,7 @@ const byte CHANNEL_GYRO = 5;
 //These are used when enabling a given sensor
 #define SENSOR_REPORTID_ACCELEROMETER SH2_ACCELEROMETER
 #define SENSOR_REPORTID_GYROSCOPE_CALIBRATED SH2_GYROSCOPE_CALIBRATED
-#define SENSOR_REPORTID_MAGNETIC_FIELD 0x03
+#define SENSOR_REPORTID_MAGNETIC_FIELD SH2_MAGNETIC_FIELD_CALIBRATED
 #define SENSOR_REPORTID_LINEAR_ACCELERATION 0x04
 #define SENSOR_REPORTID_ROTATION_VECTOR SH2_ROTATION_VECTOR
 #define SENSOR_REPORTID_GRAVITY 0x06
@@ -203,7 +203,7 @@ public:
 	bool enableGravity(uint16_t timeBetweenReports);
 	bool enableGyro(uint16_t timeBetweenReports = 10);
 	bool enableUncalibratedGyro(uint16_t timeBetweenReports);
-	bool enableMagnetometer(uint16_t timeBetweenReports);
+	bool enableMagnetometer(uint16_t timeBetweenReports = 10);
 	bool enableTapDetector(uint16_t timeBetweenReports);
 	bool enableStepCounter(uint16_t timeBetweenReports);
 	bool enableStabilityClassifier(uint16_t timeBetweenReports);
