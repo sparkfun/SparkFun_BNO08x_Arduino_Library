@@ -625,22 +625,19 @@ void BNO08x::getAccel(float &x, float &y, float &z, uint8_t &accuracy)
 //Return the acceleration component
 float BNO08x::getAccelX()
 {
-	float accel = qToFloat(rawAccelX, accelerometer_Q1);
-	return (accel);
+	return _sensor_value->un.accelerometer.x;
 }
 
 //Return the acceleration component
 float BNO08x::getAccelY()
 {
-	float accel = qToFloat(rawAccelY, accelerometer_Q1);
-	return (accel);
+	return _sensor_value->un.accelerometer.y;
 }
 
 //Return the acceleration component
 float BNO08x::getAccelZ()
 {
-	float accel = qToFloat(rawAccelZ, accelerometer_Q1);
-	return (accel);
+	return _sensor_value->un.accelerometer.z;
 }
 
 //Return the acceleration component
@@ -1223,9 +1220,10 @@ bool BNO08x::enableRotationVector(uint16_t timeBetweenReports)
 }
 
 //Sends the packet to enable the ar/vr stabilized rotation vector
-void BNO08x::enableARVRStabilizedRotationVector(uint16_t timeBetweenReports)
+bool BNO08x::enableARVRStabilizedRotationVector(uint16_t timeBetweenReports)
 {
-	setFeatureCommand(SENSOR_REPORTID_AR_VR_STABILIZED_ROTATION_VECTOR, timeBetweenReports);
+	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
+	return enableReport(SENSOR_REPORTID_AR_VR_STABILIZED_ROTATION_VECTOR, timeBetweenReports);
 }
 
 //Sends the packet to enable the rotation vector
@@ -1236,90 +1234,104 @@ bool BNO08x::enableGameRotationVector(uint16_t timeBetweenReports)
 }
 
 //Sends the packet to enable the ar/vr stabilized rotation vector
-void BNO08x::enableARVRStabilizedGameRotationVector(uint16_t timeBetweenReports)
+bool BNO08x::enableARVRStabilizedGameRotationVector(uint16_t timeBetweenReports)
 {
-	setFeatureCommand(SENSOR_REPORTID_AR_VR_STABILIZED_GAME_ROTATION_VECTOR, timeBetweenReports);
+	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
+	return enableReport(SENSOR_REPORTID_AR_VR_STABILIZED_GAME_ROTATION_VECTOR, timeBetweenReports);
 }
 
 //Sends the packet to enable the accelerometer
-void BNO08x::enableAccelerometer(uint16_t timeBetweenReports)
+bool BNO08x::enableAccelerometer(uint16_t timeBetweenReports)
 {
-	setFeatureCommand(SENSOR_REPORTID_ACCELEROMETER, timeBetweenReports);
+	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
+	return enableReport(SH2_ACCELEROMETER, timeBetweenReports);
 }
 
 //Sends the packet to enable the accelerometer
-void BNO08x::enableLinearAccelerometer(uint16_t timeBetweenReports)
+bool BNO08x::enableLinearAccelerometer(uint16_t timeBetweenReports)
 {
-	setFeatureCommand(SENSOR_REPORTID_LINEAR_ACCELERATION, timeBetweenReports);
+	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
+	return enableReport(SENSOR_REPORTID_LINEAR_ACCELERATION, timeBetweenReports);	
 }
 
 //Sends the packet to enable the gravity vector
-void BNO08x::enableGravity(uint16_t timeBetweenReports)
+bool BNO08x::enableGravity(uint16_t timeBetweenReports)
 {
-	setFeatureCommand(SENSOR_REPORTID_GRAVITY, timeBetweenReports);
+	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
+	return enableReport(SENSOR_REPORTID_GRAVITY, timeBetweenReports);	
 }
 
 //Sends the packet to enable the gyro
-void BNO08x::enableGyro(uint16_t timeBetweenReports)
+bool BNO08x::enableGyro(uint16_t timeBetweenReports)
 {
-	setFeatureCommand(SENSOR_REPORTID_GYROSCOPE, timeBetweenReports);
+	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
+	return enableReport(SENSOR_REPORTID_GYROSCOPE, timeBetweenReports);		
 }
 
 //Sends the packet to enable the uncalibrated gyro
-void BNO08x::enableUncalibratedGyro(uint16_t timeBetweenReports)
+bool BNO08x::enableUncalibratedGyro(uint16_t timeBetweenReports)
 {
-	setFeatureCommand(SENSOR_REPORTID_UNCALIBRATED_GYRO, timeBetweenReports);
+	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
+	return enableReport(SENSOR_REPORTID_UNCALIBRATED_GYRO, timeBetweenReports);		
 }
 
 //Sends the packet to enable the magnetometer
-void BNO08x::enableMagnetometer(uint16_t timeBetweenReports)
+bool BNO08x::enableMagnetometer(uint16_t timeBetweenReports)
 {
-	setFeatureCommand(SENSOR_REPORTID_MAGNETIC_FIELD, timeBetweenReports);
+	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
+	return enableReport(SENSOR_REPORTID_MAGNETIC_FIELD, timeBetweenReports);		
 }
 
 //Sends the packet to enable the high refresh-rate gyro-integrated rotation vector
-void BNO08x::enableGyroIntegratedRotationVector(uint16_t timeBetweenReports)
+bool BNO08x::enableGyroIntegratedRotationVector(uint16_t timeBetweenReports)
 {
-	setFeatureCommand(SENSOR_REPORTID_GYRO_INTEGRATED_ROTATION_VECTOR, timeBetweenReports);
+	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
+	return enableReport(SENSOR_REPORTID_GYRO_INTEGRATED_ROTATION_VECTOR, timeBetweenReports);		
 }
 
 //Sends the packet to enable the tap detector
-void BNO08x::enableTapDetector(uint16_t timeBetweenReports)
+bool BNO08x::enableTapDetector(uint16_t timeBetweenReports)
 {
-	setFeatureCommand(SENSOR_REPORTID_TAP_DETECTOR, timeBetweenReports);
+	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
+	return enableReport(SENSOR_REPORTID_TAP_DETECTOR, timeBetweenReports);		
 }
 
 //Sends the packet to enable the step counter
-void BNO08x::enableStepCounter(uint16_t timeBetweenReports)
+bool BNO08x::enableStepCounter(uint16_t timeBetweenReports)
 {
-	setFeatureCommand(SENSOR_REPORTID_STEP_COUNTER, timeBetweenReports);
+	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
+	return enableReport(SENSOR_REPORTID_STEP_COUNTER, timeBetweenReports);		
 }
 
 //Sends the packet to enable the Stability Classifier
-void BNO08x::enableStabilityClassifier(uint16_t timeBetweenReports)
+bool BNO08x::enableStabilityClassifier(uint16_t timeBetweenReports)
 {
-	setFeatureCommand(SENSOR_REPORTID_STABILITY_CLASSIFIER, timeBetweenReports);
+	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
+	return enableReport(SENSOR_REPORTID_STABILITY_CLASSIFIER, timeBetweenReports);		
 }
 
 //Sends the packet to enable the raw accel readings
 //Note you must enable basic reporting on the sensor as well
-void BNO08x::enableRawAccelerometer(uint16_t timeBetweenReports)
+bool BNO08x::enableRawAccelerometer(uint16_t timeBetweenReports)
 {
-	setFeatureCommand(SENSOR_REPORTID_RAW_ACCELEROMETER, timeBetweenReports);
+	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
+	return enableReport(SENSOR_REPORTID_RAW_ACCELEROMETER, timeBetweenReports);		
 }
 
 //Sends the packet to enable the raw accel readings
 //Note you must enable basic reporting on the sensor as well
-void BNO08x::enableRawGyro(uint16_t timeBetweenReports)
+bool BNO08x::enableRawGyro(uint16_t timeBetweenReports)
 {
-	setFeatureCommand(SENSOR_REPORTID_RAW_GYROSCOPE, timeBetweenReports);
+	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
+	return enableReport(SENSOR_REPORTID_RAW_GYROSCOPE, timeBetweenReports);		
 }
 
 //Sends the packet to enable the raw accel readings
 //Note you must enable basic reporting on the sensor as well
-void BNO08x::enableRawMagnetometer(uint16_t timeBetweenReports)
+bool BNO08x::enableRawMagnetometer(uint16_t timeBetweenReports)
 {
-	setFeatureCommand(SENSOR_REPORTID_RAW_MAGNETOMETER, timeBetweenReports);
+	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
+	return enableReport(SENSOR_REPORTID_RAW_MAGNETOMETER, timeBetweenReports);		
 }
 
 //Sends the packet to enable the various activity classifiers

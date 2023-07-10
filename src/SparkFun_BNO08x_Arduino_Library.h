@@ -92,11 +92,11 @@ const byte CHANNEL_GYRO = 5;
 
 //All the different sensors and features we can get reports from
 //These are used when enabling a given sensor
-#define SENSOR_REPORTID_ACCELEROMETER 0x01
+#define SENSOR_REPORTID_ACCELEROMETER SH2_ACCELEROMETER
 #define SENSOR_REPORTID_GYROSCOPE 0x02
 #define SENSOR_REPORTID_MAGNETIC_FIELD 0x03
 #define SENSOR_REPORTID_LINEAR_ACCELERATION 0x04
-#define SENSOR_REPORTID_ROTATION_VECTOR 0x05
+#define SENSOR_REPORTID_ROTATION_VECTOR SH2_ROTATION_VECTOR
 #define SENSOR_REPORTID_GRAVITY 0x06
 #define SENSOR_REPORTID_UNCALIBRATED_GYRO 0x07
 #define SENSOR_REPORTID_GAME_ROTATION_VECTOR 0x08
@@ -196,22 +196,22 @@ public:
 
 	bool enableRotationVector(uint16_t timeBetweenReports = 10);
 	bool enableGameRotationVector(uint16_t timeBetweenReports = 10);
-	void enableARVRStabilizedRotationVector(uint16_t timeBetweenReports);
-	void enableARVRStabilizedGameRotationVector(uint16_t timeBetweenReports);
-	void enableAccelerometer(uint16_t timeBetweenReports);
-	void enableLinearAccelerometer(uint16_t timeBetweenReports);
-	void enableGravity(uint16_t timeBetweenReports);
-	void enableGyro(uint16_t timeBetweenReports);
-	void enableUncalibratedGyro(uint16_t timeBetweenReports);
-	void enableMagnetometer(uint16_t timeBetweenReports);
-	void enableTapDetector(uint16_t timeBetweenReports);
-	void enableStepCounter(uint16_t timeBetweenReports);
-	void enableStabilityClassifier(uint16_t timeBetweenReports);
+	bool enableARVRStabilizedRotationVector(uint16_t timeBetweenReports);
+	bool enableARVRStabilizedGameRotationVector(uint16_t timeBetweenReports);
+	bool enableAccelerometer(uint16_t timeBetweenReports = 10);
+	bool enableLinearAccelerometer(uint16_t timeBetweenReports);
+	bool enableGravity(uint16_t timeBetweenReports);
+	bool enableGyro(uint16_t timeBetweenReports);
+	bool enableUncalibratedGyro(uint16_t timeBetweenReports);
+	bool enableMagnetometer(uint16_t timeBetweenReports);
+	bool enableTapDetector(uint16_t timeBetweenReports);
+	bool enableStepCounter(uint16_t timeBetweenReports);
+	bool enableStabilityClassifier(uint16_t timeBetweenReports);
 	void enableActivityClassifier(uint16_t timeBetweenReports, uint32_t activitiesToEnable, uint8_t (&activityConfidences)[9]);
-	void enableRawAccelerometer(uint16_t timeBetweenReports);
-	void enableRawGyro(uint16_t timeBetweenReports);
-	void enableRawMagnetometer(uint16_t timeBetweenReports);
-	void enableGyroIntegratedRotationVector(uint16_t timeBetweenReports);
+	bool enableRawAccelerometer(uint16_t timeBetweenReports);
+	bool enableRawGyro(uint16_t timeBetweenReports);
+	bool enableRawMagnetometer(uint16_t timeBetweenReports);
+	bool enableGyroIntegratedRotationVector(uint16_t timeBetweenReports);
 
 	bool dataAvailable(void);
 	uint16_t getReadings(void);

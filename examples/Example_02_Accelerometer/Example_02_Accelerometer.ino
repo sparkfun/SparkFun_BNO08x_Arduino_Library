@@ -1,9 +1,8 @@
 /*
   Using the BNO08x IMU
 
-  This example shows how to output the i/j/k/real parts of the rotation vector.
-  https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
-
+  This example shows how to output accelerometer values.
+  
   By: Nathan Seidle
   SparkFun Electronics
   Date: December 21st, 2017
@@ -30,7 +29,7 @@
 
 #include <Wire.h>
 
-#include "SparkFun_BNO08x_Arduino_Library.h"  // Click here to get the library: http://librarymanager/All#SparkFun_BNO08x
+#include "SparkFun_BNO08x_Arduino_Library.h" // Click here to get the library: http://librarymanager/All#SparkFun_BNO08x
 BNO08x myIMU;
 
 void setup() {
@@ -58,11 +57,11 @@ void setup() {
 // Here is where you define the sensor outputs you want to receive
 void setReports(void) {
   Serial.println("Setting desired reports");
-  if (myIMU.enableRotationVector() == true) {
-    Serial.println(F("Rotation vector enabled"));
-    Serial.println(F("Output in form i, j, k, real, accuracy"));
+  if (myIMU.enableAccelerometer() == true) {
+    Serial.println(F("Accelerometer enabled"));
+    Serial.println(F("Output in form x, y, z, in m/s^2"));
   } else {
-    Serial.println("Could not enable rotation vector");
+    Serial.println("Could not enable accelerometer");
   }
 }
 
@@ -78,23 +77,17 @@ void loop() {
   if (myIMU.getSensorEvent() == true) {
 
     // is it the correct sensor data we want?
-    if (myIMU.getSensorEventID() == SENSOR_REPORTID_ROTATION_VECTOR) {
+    if (myIMU.getSensorEventID() == SENSOR_REPORTID_ACCELEROMETER) {
 
-      float quatI = myIMU.getQuatI();
-      float quatJ = myIMU.getQuatJ();
-      float quatK = myIMU.getQuatK();
-      float quatReal = myIMU.getQuatReal();
-      float quatRadianAccuracy = myIMU.getQuatRadianAccuracy();
+      float x = myIMU.getAccelX();
+      float y = myIMU.getAccelY();
+      float z = myIMU.getAccelZ();
 
-      Serial.print(quatI, 2);
+      Serial.print(x, 2);
       Serial.print(F(","));
-      Serial.print(quatJ, 2);
+      Serial.print(y, 2);
       Serial.print(F(","));
-      Serial.print(quatK, 2);
-      Serial.print(F(","));
-      Serial.print(quatReal, 2);
-      Serial.print(F(","));
-      Serial.print(quatRadianAccuracy, 2);
+      Serial.print(z, 2);
       Serial.print(F(","));
 
       Serial.println();

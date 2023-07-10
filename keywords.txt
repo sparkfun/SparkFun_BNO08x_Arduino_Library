@@ -6,7 +6,7 @@
 # Datatypes (KEYWORD1)
 #######################################
 
-BNO080	KEYWORD1
+BNO08x	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
