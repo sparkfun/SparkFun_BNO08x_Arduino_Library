@@ -298,6 +298,7 @@ typedef struct sh2_SigMotion {
 #define STABILITY_CLASSIFIER_STATIONARY (2)
 #define STABILITY_CLASSIFIER_STABLE (3)
 #define STABILITY_CLASSIFIER_MOTION (4)
+#define STABILITY_CLASSIFIER_RESERVED (5)
 typedef struct sh2_StabilityClassifier {
     uint8_t classification;
 } sh2_StabilityClassifier_t;

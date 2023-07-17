@@ -387,10 +387,6 @@ uint16_t BNO08x::parseInputReport(void)
 	else if (shtpData[5] == SENSOR_REPORTID_PERSONAL_ACTIVITY_CLASSIFIER)
 	{
 		activityClassifier = shtpData[5 + 5]; //Most likely state
-
-		//Load activity classification confidences into the array
-		for (uint8_t x = 0; x < 9; x++)					   //Hardcoded to max of 9. TODO - bring in array size
-			_activityConfidences[x] = shtpData[5 + 6 + x]; //5 bytes of timestamp, byte 6 is first confidence byte
 	}
 	else if (shtpData[5] == SENSOR_REPORTID_RAW_ACCELEROMETER)
 	{
@@ -890,13 +886,19 @@ uint16_t BNO08x::getStepCount()
 //Return the stability classifier
 uint8_t BNO08x::getStabilityClassifier()
 {
-	return (stabilityClassifier);
+	return _sensor_value->un.stabilityClassifier.classification;
 }
 
 //Return the activity classifier
 uint8_t BNO08x::getActivityClassifier()
 {
-	return (activityClassifier);
+	return _sensor_value->un.personalActivityClassifier.mostLikelyState;
+}
+
+//Return the activity confindence
+uint8_t BNO08x::getActivityConfidence(uint8_t activity)
+{
+	return _sensor_value->un.personalActivityClassifier.confidence[activity];
 }
 
 //Return the time stamp
@@ -1329,11 +1331,10 @@ bool BNO08x::enableRawMagnetometer(uint16_t timeBetweenReports)
 }
 
 //Sends the packet to enable the various activity classifiers
-void BNO08x::enableActivityClassifier(uint16_t timeBetweenReports, uint32_t activitiesToEnable, uint8_t (&activityConfidences)[9])
+bool BNO08x::enableActivityClassifier(uint16_t timeBetweenReports, uint32_t activitiesToEnable)
 {
-	_activityConfidences = activityConfidences; //Store pointer to array
-
-	setFeatureCommand(SENSOR_REPORTID_PERSONAL_ACTIVITY_CLASSIFIER, timeBetweenReports, activitiesToEnable);
+	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
+	return enableReport(SENSOR_REPORTID_PERSONAL_ACTIVITY_CLASSIFIER, timeBetweenReports, activitiesToEnable);
 }
 
 //Sends the commands to begin calibration of the accelerometer
@@ -1981,10 +1982,12 @@ bool BNO08x::getSensorEvent() {
  * @param sensorId The report ID to enable
  * @param interval_us The update interval for reports to be generated, in
  * microseconds
+ * @param sensorSpecific config settings specific to sensor/reportID.
+ * (e.g. enabling/disabling possible activities in personal activity classifier)
  * @return true: success false: failure
  */
-bool BNO08x::enableReport(sh2_SensorId_t sensorId,
-                                   uint32_t interval_us) {
+bool BNO08x::enableReport(sh2_SensorId_t sensorId, uint32_t interval_us,
+							   	   uint32_t sensorSpecific) {
   static sh2_SensorConfig_t config;
 
   // These sensor options are disabled or not used in most cases
@@ -1994,7 +1997,7 @@ bool BNO08x::enableReport(sh2_SensorId_t sensorId,
   config.alwaysOnEnabled = false;
   config.changeSensitivity = 0;
   config.batchInterval_us = 0;
-  config.sensorSpecific = 0;
+  config.sensorSpecific = sensorSpecific;
 
   config.reportInterval_us = interval_us;
   int status = sh2_setSensorConfig(sensorId, &config);

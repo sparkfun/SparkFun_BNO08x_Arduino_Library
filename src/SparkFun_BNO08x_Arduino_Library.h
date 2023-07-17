@@ -104,11 +104,11 @@ const byte CHANNEL_GYRO = 5;
 #define SENSOR_REPORTID_GYRO_INTEGRATED_ROTATION_VECTOR 0x2A
 #define SENSOR_REPORTID_TAP_DETECTOR 0x10
 #define SENSOR_REPORTID_STEP_COUNTER SH2_STEP_COUNTER
-#define SENSOR_REPORTID_STABILITY_CLASSIFIER 0x13
+#define SENSOR_REPORTID_STABILITY_CLASSIFIER SH2_STABILITY_CLASSIFIER
 #define SENSOR_REPORTID_RAW_ACCELEROMETER 0x14
 #define SENSOR_REPORTID_RAW_GYROSCOPE 0x15
 #define SENSOR_REPORTID_RAW_MAGNETOMETER 0x16
-#define SENSOR_REPORTID_PERSONAL_ACTIVITY_CLASSIFIER 0x1E
+#define SENSOR_REPORTID_PERSONAL_ACTIVITY_CLASSIFIER SH2_PERSONAL_ACTIVITY_CLASSIFIER
 #define SENSOR_REPORTID_AR_VR_STABILIZED_ROTATION_VECTOR 0x28
 #define SENSOR_REPORTID_AR_VR_STABILIZED_GAME_ROTATION_VECTOR 0x29
 
@@ -170,7 +170,7 @@ public:
     void hardwareReset(void);
     bool wasReset(void);
 
-    bool enableReport(sh2_SensorId_t sensor, uint32_t interval_us = 10000);
+    bool enableReport(sh2_SensorId_t sensor, uint32_t interval_us = 10000, uint32_t sensorSpecific = 0);
     bool getSensorEvent();
 	uint8_t getSensorEventID();
 
@@ -206,8 +206,8 @@ public:
 	bool enableMagnetometer(uint16_t timeBetweenReports = 10);
 	bool enableTapDetector(uint16_t timeBetweenReports);
 	bool enableStepCounter(uint16_t timeBetweenReports = 10);
-	bool enableStabilityClassifier(uint16_t timeBetweenReports);
-	void enableActivityClassifier(uint16_t timeBetweenReports, uint32_t activitiesToEnable, uint8_t (&activityConfidences)[9]);
+	bool enableStabilityClassifier(uint16_t timeBetweenReports = 10);
+	bool enableActivityClassifier(uint16_t timeBetweenReports, uint32_t activitiesToEnable);
 	bool enableRawAccelerometer(uint16_t timeBetweenReports);
 	bool enableRawGyro(uint16_t timeBetweenReports);
 	bool enableRawMagnetometer(uint16_t timeBetweenReports);
@@ -290,6 +290,7 @@ public:
 	uint16_t getStepCount();
 	uint8_t getStabilityClassifier();
 	uint8_t getActivityClassifier();
+	uint8_t getActivityConfidence(uint8_t activity);
 
 	int16_t getRawAccelX();
 	int16_t getRawAccelY();
@@ -358,7 +359,6 @@ private:
 	uint32_t timeStamp;
 	uint8_t stabilityClassifier;
 	uint8_t activityClassifier;
-	uint8_t *_activityConfidences;						  //Array that store the confidences of the 9 possible activities
 	uint8_t calibrationStatus;							  //Byte R0 of ME Calibration Response
 	uint16_t memsRawAccelX, memsRawAccelY, memsRawAccelZ; //Raw readings from MEMS sensor
 	uint16_t memsRawGyroX, memsRawGyroY, memsRawGyroZ;	//Raw readings from MEMS sensor
