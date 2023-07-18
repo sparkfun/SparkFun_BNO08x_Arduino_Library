@@ -639,7 +639,7 @@ float BNO08x::getAccelZ()
 //Return the acceleration component
 uint8_t BNO08x::getAccelAccuracy()
 {
-	return (accelAccuracy);
+	return _sensor_value->status;
 }
 
 // linear acceleration, i.e. minus gravity
@@ -657,28 +657,25 @@ void BNO08x::getLinAccel(float &x, float &y, float &z, uint8_t &accuracy)
 //Return the acceleration component
 float BNO08x::getLinAccelX()
 {
-	float accel = qToFloat(rawLinAccelX, linear_accelerometer_Q1);
-	return (accel);
+	return _sensor_value->un.linearAcceleration.x;
 }
 
 //Return the acceleration component
 float BNO08x::getLinAccelY()
 {
-	float accel = qToFloat(rawLinAccelY, linear_accelerometer_Q1);
-	return (accel);
+	return _sensor_value->un.linearAcceleration.y;
 }
 
 //Return the acceleration component
 float BNO08x::getLinAccelZ()
 {
-	float accel = qToFloat(rawLinAccelZ, linear_accelerometer_Q1);
-	return (accel);
+	return _sensor_value->un.linearAcceleration.z;
 }
 
 //Return the acceleration component
 uint8_t BNO08x::getLinAccelAccuracy()
 {
-	return (accelLinAccuracy);
+	return _sensor_value->status;
 }
 
 //Gets the full gyro vector
