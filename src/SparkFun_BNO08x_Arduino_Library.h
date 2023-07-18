@@ -286,7 +286,7 @@ public:
 	void clearTare();
 	
 	uint8_t getTapDetector();
-	uint32_t getTimeStamp();
+	uint64_t getTimeStamp();
 	uint16_t getStepCount();
 	uint8_t getStabilityClassifier();
 	uint8_t getActivityClassifier();

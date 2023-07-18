@@ -899,9 +899,9 @@ uint8_t BNO08x::getActivityConfidence(uint8_t activity)
 }
 
 //Return the time stamp
-uint32_t BNO08x::getTimeStamp()
+uint64_t BNO08x::getTimeStamp()
 {
-	return (timeStamp);
+	return _sensor_value->timestamp;
 }
 
 //Return raw mems value for the accel
