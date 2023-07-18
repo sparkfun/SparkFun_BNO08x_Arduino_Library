@@ -907,45 +907,45 @@ uint64_t BNO08x::getTimeStamp()
 //Return raw mems value for the accel
 int16_t BNO08x::getRawAccelX()
 {
-	return (memsRawAccelX);
+	return _sensor_value->un.rawAccelerometer.x;
 }
 //Return raw mems value for the accel
 int16_t BNO08x::getRawAccelY()
 {
-	return (memsRawAccelY);
+	return _sensor_value->un.rawAccelerometer.y;
 }
 //Return raw mems value for the accel
 int16_t BNO08x::getRawAccelZ()
 {
-	return (memsRawAccelZ);
+	return _sensor_value->un.rawAccelerometer.z;
 }
 
 //Return raw mems value for the gyro
 int16_t BNO08x::getRawGyroX()
 {
-	return (memsRawGyroX);
+	return _sensor_value->un.rawGyroscope.x;
 }
 int16_t BNO08x::getRawGyroY()
 {
-	return (memsRawGyroY);
+	return _sensor_value->un.rawGyroscope.y;
 }
 int16_t BNO08x::getRawGyroZ()
 {
-	return (memsRawGyroZ);
+	return _sensor_value->un.rawGyroscope.z;
 }
 
 //Return raw mems value for the mag
 int16_t BNO08x::getRawMagX()
 {
-	return (memsRawMagX);
+	return _sensor_value->un.rawMagnetometer.x;
 }
 int16_t BNO08x::getRawMagY()
 {
-	return (memsRawMagY);
+	return _sensor_value->un.rawMagnetometer.y;
 }
 int16_t BNO08x::getRawMagZ()
 {
-	return (memsRawMagZ);
+	return _sensor_value->un.rawMagnetometer.z;
 }
 
 //Given a record ID, read the Q1 value from the metaData record in the FRS (ya, it's complicated)

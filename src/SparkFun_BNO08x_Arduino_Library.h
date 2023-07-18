@@ -208,9 +208,9 @@ public:
 	bool enableStepCounter(uint16_t timeBetweenReports = 10);
 	bool enableStabilityClassifier(uint16_t timeBetweenReports = 10);
 	bool enableActivityClassifier(uint16_t timeBetweenReports, uint32_t activitiesToEnable);
-	bool enableRawAccelerometer(uint16_t timeBetweenReports);
-	bool enableRawGyro(uint16_t timeBetweenReports);
-	bool enableRawMagnetometer(uint16_t timeBetweenReports);
+	bool enableRawAccelerometer(uint16_t timeBetweenReports = 10);
+	bool enableRawGyro(uint16_t timeBetweenReports = 10);
+	bool enableRawMagnetometer(uint16_t timeBetweenReports = 10);
 	bool enableGyroIntegratedRotationVector(uint16_t timeBetweenReports);
 
 	bool dataAvailable(void);
