@@ -716,49 +716,43 @@ uint8_t BNO08x::getGyroAccuracy()
 //x,y,z,bx,by,bz output floats
 void BNO08x::getUncalibratedGyro(float &x, float &y, float &z, float &bx, float &by, float &bz, uint8_t &accuracy)
 {
-	x = qToFloat(rawUncalibGyroX, gyro_Q1);
-	y = qToFloat(rawUncalibGyroY, gyro_Q1);
-	z = qToFloat(rawUncalibGyroZ, gyro_Q1);
-	bx = qToFloat(rawBiasX, gyro_Q1);
-	by = qToFloat(rawBiasY, gyro_Q1);
-	bz = qToFloat(rawBiasZ, gyro_Q1);
-	accuracy = UncalibGyroAccuracy;
+	x = _sensor_value->un.gyroscopeUncal.x;
+	y = _sensor_value->un.gyroscopeUncal.y;
+	z = _sensor_value->un.gyroscopeUncal.z;
+	bx = _sensor_value->un.gyroscopeUncal.biasX;
+	by = _sensor_value->un.gyroscopeUncal.biasY;
+	bz = _sensor_value->un.gyroscopeUncal.biasZ;
+	accuracy = _sensor_value->status;
 }
 //Return the gyro component
 float BNO08x::getUncalibratedGyroX()
 {
-	float gyro = qToFloat(rawUncalibGyroX, gyro_Q1);
-	return (gyro);
+	return _sensor_value->un.gyroscopeUncal.x;
 }
 //Return the gyro component
 float BNO08x::getUncalibratedGyroY()
 {
-	float gyro = qToFloat(rawUncalibGyroY, gyro_Q1);
-	return (gyro);
+	return _sensor_value->un.gyroscopeUncal.y;
 }
 //Return the gyro component
 float BNO08x::getUncalibratedGyroZ()
 {
-	float gyro = qToFloat(rawUncalibGyroZ, gyro_Q1);
-	return (gyro);
+	return _sensor_value->un.gyroscopeUncal.z;
 }
 //Return the gyro component
 float BNO08x::getUncalibratedGyroBiasX()
 {
-	float gyro = qToFloat(rawBiasX, gyro_Q1);
-	return (gyro);
+	return _sensor_value->un.gyroscopeUncal.biasX;
 }
 //Return the gyro component
 float BNO08x::getUncalibratedGyroBiasY()
 {
-	float gyro = qToFloat(rawBiasY, gyro_Q1);
-	return (gyro);
+	return _sensor_value->un.gyroscopeUncal.biasY;
 }
 //Return the gyro component
 float BNO08x::getUncalibratedGyroBiasZ()
 {
-	float gyro = qToFloat(rawBiasZ, gyro_Q1);
-	return (gyro);
+	return _sensor_value->un.gyroscopeUncal.biasZ;
 }
 
 //Return the gyro component

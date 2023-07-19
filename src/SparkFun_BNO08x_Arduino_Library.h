@@ -98,7 +98,7 @@ const byte CHANNEL_GYRO = 5;
 #define SENSOR_REPORTID_LINEAR_ACCELERATION SH2_LINEAR_ACCELERATION
 #define SENSOR_REPORTID_ROTATION_VECTOR SH2_ROTATION_VECTOR
 #define SENSOR_REPORTID_GRAVITY 0x06
-#define SENSOR_REPORTID_UNCALIBRATED_GYRO 0x07
+#define SENSOR_REPORTID_UNCALIBRATED_GYRO SH2_GYROSCOPE_UNCALIBRATED
 #define SENSOR_REPORTID_GAME_ROTATION_VECTOR 0x08
 #define SENSOR_REPORTID_GEOMAGNETIC_ROTATION_VECTOR 0x09
 #define SENSOR_REPORTID_GYRO_INTEGRATED_ROTATION_VECTOR SH2_GYRO_INTEGRATED_RV
@@ -202,7 +202,7 @@ public:
 	bool enableLinearAccelerometer(uint16_t timeBetweenReports = 10);
 	bool enableGravity(uint16_t timeBetweenReports);
 	bool enableGyro(uint16_t timeBetweenReports = 10);
-	bool enableUncalibratedGyro(uint16_t timeBetweenReports);
+	bool enableUncalibratedGyro(uint16_t timeBetweenReports = 10);
 	bool enableMagnetometer(uint16_t timeBetweenReports = 10);
 	bool enableTapDetector(uint16_t timeBetweenReports);
 	bool enableStepCounter(uint16_t timeBetweenReports = 10);
