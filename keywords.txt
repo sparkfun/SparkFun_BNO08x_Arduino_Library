@@ -92,10 +92,13 @@ getGravityY KEYWORD2
 getGravityZ KEYWORD2
 getGravityAccuracy KEYWORD2
 
-getFastGyro	KEYWORD2
-getFastGyroX	KEYWORD2
-getFastGyroY	KEYWORD2
-getFastGyroZ	KEYWORD2
+getGyroIntegratedRVI	KEYWORD2
+getGyroIntegratedRVJ	KEYWORD2
+getGyroIntegratedRVK	KEYWORD2
+getGyroIntegratedRVReal	KEYWORD2
+getGyroIntegratedRVangVelX	KEYWORD2
+getGyroIntegratedRVangVelY	KEYWORD2
+getGyroIntegratedRVangVelZ	KEYWORD2
 
 getMag	KEYWORD2
 getMagX	KEYWORD2

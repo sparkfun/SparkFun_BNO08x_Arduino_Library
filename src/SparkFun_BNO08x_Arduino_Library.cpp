@@ -836,34 +836,46 @@ uint8_t BNO08x::getMagAccuracy()
 	return _sensor_value->status;
 }
 
-//Gets the full high rate gyro vector
-//x,y,z output floats
-void BNO08x::getFastGyro(float &x, float &y, float &z)
+// Return Gyro Integrated Rotation Vector i
+float BNO08x::getGyroIntegratedRVI()
 {
-	x = qToFloat(rawFastGyroX, angular_velocity_Q1);
-	y = qToFloat(rawFastGyroY, angular_velocity_Q1);
-	z = qToFloat(rawFastGyroZ, angular_velocity_Q1);
+	return _sensor_value->un.gyroIntegratedRV.i;
 }
 
-// Return the high refresh rate gyro component
-float BNO08x::getFastGyroX()
+// Return Gyro Integrated Rotation Vector j
+float BNO08x::getGyroIntegratedRVJ()
 {
-	float gyro = qToFloat(rawFastGyroX, angular_velocity_Q1);
-	return (gyro);
+	return _sensor_value->un.gyroIntegratedRV.j;
 }
 
-// Return the high refresh rate gyro component
-float BNO08x::getFastGyroY()
+// Return Gyro Integrated Rotation Vector k
+float BNO08x::getGyroIntegratedRVK()
 {
-	float gyro = qToFloat(rawFastGyroY, angular_velocity_Q1);
-	return (gyro);
+	return _sensor_value->un.gyroIntegratedRV.k;
 }
 
-// Return the high refresh rate gyro component
-float BNO08x::getFastGyroZ()
+// Return Gyro Integrated Rotation Vector real
+float BNO08x::getGyroIntegratedRVReal()
 {
-	float gyro = qToFloat(rawFastGyroZ, angular_velocity_Q1);
-	return (gyro);
+	return _sensor_value->un.gyroIntegratedRV.real;
+}
+
+// Return Gyro Integrated Rotation Vector angVelX
+float BNO08x::getGyroIntegratedRVangVelX()
+{
+	return _sensor_value->un.gyroIntegratedRV.angVelX;
+}
+
+// Return Gyro Integrated Rotation Vector angVelY
+float BNO08x::getGyroIntegratedRVangVelY()
+{
+	return _sensor_value->un.gyroIntegratedRV.angVelY;
+}
+
+// Return Gyro Integrated Rotation Vector angVelZ
+float BNO08x::getGyroIntegratedRVangVelZ()
+{
+	return _sensor_value->un.gyroIntegratedRV.angVelZ;
 }
 
 //Return the tap detector

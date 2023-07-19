@@ -101,7 +101,7 @@ const byte CHANNEL_GYRO = 5;
 #define SENSOR_REPORTID_UNCALIBRATED_GYRO 0x07
 #define SENSOR_REPORTID_GAME_ROTATION_VECTOR 0x08
 #define SENSOR_REPORTID_GEOMAGNETIC_ROTATION_VECTOR 0x09
-#define SENSOR_REPORTID_GYRO_INTEGRATED_ROTATION_VECTOR 0x2A
+#define SENSOR_REPORTID_GYRO_INTEGRATED_ROTATION_VECTOR SH2_GYRO_INTEGRATED_RV
 #define SENSOR_REPORTID_TAP_DETECTOR 0x10
 #define SENSOR_REPORTID_STEP_COUNTER SH2_STEP_COUNTER
 #define SENSOR_REPORTID_STABILITY_CLASSIFIER SH2_STABILITY_CLASSIFIER
@@ -211,7 +211,7 @@ public:
 	bool enableRawAccelerometer(uint16_t timeBetweenReports = 10);
 	bool enableRawGyro(uint16_t timeBetweenReports = 10);
 	bool enableRawMagnetometer(uint16_t timeBetweenReports = 10);
-	bool enableGyroIntegratedRotationVector(uint16_t timeBetweenReports);
+	bool enableGyroIntegratedRotationVector(uint16_t timeBetweenReports = 10);
 
 	bool dataAvailable(void);
 	uint16_t getReadings(void);
@@ -253,11 +253,13 @@ public:
 	float getUncalibratedGyroBiasZ();
 	uint8_t getUncalibratedGyroAccuracy();
 
-
-	void getFastGyro(float &x, float &y, float &z);
-	float getFastGyroX();
-	float getFastGyroY();
-	float getFastGyroZ();
+	float getGyroIntegratedRVI();
+	float getGyroIntegratedRVJ();
+	float getGyroIntegratedRVK();
+	float getGyroIntegratedRVReal();
+	float getGyroIntegratedRVangVelX();
+	float getGyroIntegratedRVangVelY();
+	float getGyroIntegratedRVangVelZ();
 
 	void getMag(float &x, float &y, float &z, uint8_t &accuracy);
 	float getMagX();
