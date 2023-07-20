@@ -773,27 +773,24 @@ void BNO08x::getGravity(float &x, float &y, float &z, uint8_t &accuracy)
 
 float BNO08x::getGravityX()
 {
-	float x = qToFloat(gravityX, gravity_Q1);
-	return x;
+	return _sensor_value->un.gravity.x;
 }
 
 //Return the gravity component
 float BNO08x::getGravityY()
 {
-	float y = qToFloat(gravityY, gravity_Q1);
-	return y;
+	return _sensor_value->un.gravity.y;
 }
 
 //Return the gravity component
 float BNO08x::getGravityZ()
 {
-	float z = qToFloat(gravityZ, gravity_Q1);
-	return z;
+	return _sensor_value->un.gravity.z;
 }
 
 uint8_t BNO08x::getGravityAccuracy()
 {
-	return (gravityAccuracy);
+	return _sensor_value->status;
 }
 
 //Gets the full mag vector
