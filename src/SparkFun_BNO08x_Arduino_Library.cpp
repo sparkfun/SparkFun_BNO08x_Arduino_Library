@@ -1381,19 +1381,37 @@ boolean BNO08x::calibrationComplete()
 	return (false);
 }
 
-void BNO08x::tareNow(bool zAxis, uint8_t rotationVectorBasis)
+bool BNO08x::tareNow(bool zAxis, sh2_TareBasis_t basis)
 {
-	sendTareCommand(TARE_NOW, zAxis ? TARE_AXIS_Z : TARE_AXIS_ALL, rotationVectorBasis);
+  int status = sh2_setTareNow(zAxis ? TARE_AXIS_Z : TARE_AXIS_ALL, basis);
+
+  if (status != SH2_OK) {
+    return false;
+  }
+
+  return true;	
 }
 
-void BNO08x::saveTare()
+bool BNO08x::saveTare()
 {
-	sendTareCommand(TARE_PERSIST);
+  int status = sh2_persistTare();
+
+  if (status != SH2_OK) {
+    return false;
+  }
+
+  return true;
 }
 
-void BNO08x::clearTare()
+bool BNO08x::clearTare()
 {
-	sendTareCommand(TARE_SET_REORIENTATION);
+  int status = sh2_clearTare();
+
+  if (status != SH2_OK) {
+    return false;
+  }
+
+  return true;
 }
 
 //Given a sensor's report ID, this tells the BNO08x to begin reporting the values

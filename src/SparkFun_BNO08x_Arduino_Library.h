@@ -283,9 +283,9 @@ public:
 	void requestCalibrationStatus(); //Sends command to get status
 	boolean calibrationComplete();   //Checks ME Cal response for byte 5, R0 - Status
 
-	void tareNow(bool zAxis=false, uint8_t rotationVectorBasis=TARE_ROTATION_VECTOR);
-	void saveTare();
-	void clearTare();
+	bool tareNow(bool zAxis=false, sh2_TareBasis_t basis=SH2_TARE_BASIS_ROTATION_VECTOR);
+	bool saveTare();
+	bool clearTare();
 	
 	uint8_t getTapDetector();
 	uint64_t getTimeStamp();
