@@ -43,6 +43,7 @@ static TwoWire *_i2cPort = NULL;		//The generic connection to user's chosen I2C 
 static uint8_t _deviceAddress = BNO08x_DEFAULT_ADDRESS; //Keeps track of I2C address. setI2CAddress changes this.
 
 static sh2_SensorValue_t *_sensor_value = NULL;
+static sh2_ProductIds_t *_prodIds = NULL;
 static bool _reset_occurred = false;
 
 static int i2chal_write(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len);
@@ -1097,26 +1098,39 @@ bool BNO08x::readFRSdata(uint16_t recordID, uint8_t startLocation, uint8_t words
 	}
 }
 
+bool BNO08x::serviceBus(void)
+{
+  sh2_service();
+  return true;
+}
 //Send command to reset IC
 //Read all advertisement packets from sensor
 //The sensor has been seen to reset twice if we attempt too much too quickly.
 //This seems to work reliably.
 bool BNO08x::softReset(void)
 {
-	shtpData[0] = 1; //Reset
+  int status = sh2_devReset();
 
-  bool success = false;
-  for (uint8_t attempts = 0; attempts < 5; attempts++) {
-    if (sendPacket(CHANNEL_EXECUTABLE, 1)) {
-      success = true;
-      break;
-    }
-    delay(30);
+  if (status != SH2_OK) {
+    return false;
   }
-  if (!success)
-    return 0;
-  delay(300);
-  return 1;
+
+  return true;	
+
+
+//   uint8_t softreset_pkt[] = {5, 0, 1, 0, 1};
+//   bool success = false;
+
+//     if (i2c_write(softreset_pkt, 5)) {
+//       success = true;
+
+//     }
+
+
+//   if (!success)
+//     return 0;
+//   delay(300);
+//   return 1;
 
 	// //Attempt to start communication with sensor
 	// sendPacket(CHANNEL_EXECUTABLE, 1); //Transmit packet on channel 1, 1 byte
@@ -1132,38 +1146,28 @@ bool BNO08x::softReset(void)
 
 //Set the operating mode to "On"
 //(This one is for @jerabaul29)
-void BNO08x::modeOn(void)
+bool BNO08x::modeOn(void)
 {
-	shtpData[0] = 2; //On
+  int status = sh2_devOn();
 
-	//Attempt to start communication with sensor
-	sendPacket(CHANNEL_EXECUTABLE, 1); //Transmit packet on channel 1, 1 byte
+  if (status != SH2_OK) {
+    return false;
+  }
 
-	//Read all incoming data and flush it
-	delay(50);
-	while (receivePacket() == true)
-		; //delay(1);
-	delay(50);
-	while (receivePacket() == true)
-		; //delay(1);
+  return true;	
 }
 
 //Set the operating mode to "Sleep"
 //(This one is for @jerabaul29)
-void BNO08x::modeSleep(void)
+bool BNO08x::modeSleep(void)
 {
-	shtpData[0] = 3; //Sleep
+  int status = sh2_devSleep();
 
-	//Attempt to start communication with sensor
-	sendPacket(CHANNEL_EXECUTABLE, 1); //Transmit packet on channel 1, 1 byte
+  if (status != SH2_OK) {
+    return false;
+  }
 
-	//Read all incoming data and flush it
-	delay(50);
-	while (receivePacket() == true)
-		; //delay(1);
-	delay(50);
-	while (receivePacket() == true)
-		; //delay(1);
+  return true;	
 }
 
 // Indicates if we've received a Reset Complete packet. Once it's been read, 
@@ -1178,24 +1182,9 @@ bool BNO08x::hasReset() {
 
 //Get the reason for the last reset
 //1 = POR, 2 = Internal reset, 3 = Watchdog, 4 = External reset, 5 = Other
-uint8_t BNO08x::resetReason()
+uint8_t BNO08x::getResetReason()
 {
-	shtpData[0] = SHTP_REPORT_PRODUCT_ID_REQUEST; //Request the product ID and reset info
-	shtpData[1] = 0;							  //Reserved
-
-	//Transmit packet on channel 2, 2 bytes
-	sendPacket(CHANNEL_CONTROL, 2);
-
-	//Now we wait for response
-	if (receivePacket() == true)
-	{
-		if (shtpData[0] == SHTP_REPORT_PRODUCT_ID_RESPONSE)
-		{
-			return (shtpData[1]);
-		}
-	}
-
-	return (0);
+	return prodIds.entry[0].resetCause;
 }
 
 //Given a register value and a Q point, convert to float
@@ -1937,6 +1926,7 @@ void BNO08x::printHeader(void)
  *   @returns True if chip identified and initialized
  */
 bool BNO08x::_init(int32_t sensor_id) {
+  _prodIds = &prodIds;
   int status;
 
   //hardwareReset();
@@ -1956,6 +1946,22 @@ bool BNO08x::_init(int32_t sensor_id) {
 
   // Register sensor listener
   sh2_setSensorCallback(sensorHandler, NULL);
+
+  return true;
+}
+
+/*!  @brief Request ProdID from sensor
+ *   @returns True if chip responded successfully
+ */
+bool BNO08x::requestResetReason(void) {
+  int status;
+
+  // Check connection partially by getting the product id's
+  memset(&prodIds, 0, sizeof(prodIds));
+  status = sh2_getProdIds(&prodIds);
+  if (status != SH2_OK) {
+    return false;
+  }
 
   return true;
 }
