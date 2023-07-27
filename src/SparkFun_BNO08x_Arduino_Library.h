@@ -217,11 +217,6 @@ public:
 	bool enableRawMagnetometer(uint16_t timeBetweenReports = 10);
 	bool enableGyroIntegratedRotationVector(uint16_t timeBetweenReports = 10);
 
-	bool dataAvailable(void);
-	uint16_t getReadings(void);
-	uint16_t parseInputReport(void);   //Parse sensor readings out of report
-	uint16_t parseCommandReport(void); //Parse command responses out of report
-
 	void getQuat(float &i, float &j, float &k, float &real, float &radAccuracy, uint8_t &accuracy);
 	float getQuatI();
 	float getQuatJ();
