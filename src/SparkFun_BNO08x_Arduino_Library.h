@@ -185,8 +185,8 @@ public:
 	bool serviceBus(void);	
 	bool hasReset(); //Returns true if the sensor has reported a reset. Reading this will unflag the reset.
 	uint8_t resetReason(); //Query the IMU for the reason it last reset
-	void modeOn();	  //Use the executable channel to turn the BNO on
-	void modeSleep();	  //Use the executable channel to put the BNO to sleep
+	bool modeOn();	  //Use the executable channel to turn the BNO on
+	bool modeSleep();	  //Use the executable channel to put the BNO to sleep
 
 	float qToFloat(int16_t fixedPointValue, uint8_t qPoint); //Given a Q value, converts fixed point floating to regular floating point number
 

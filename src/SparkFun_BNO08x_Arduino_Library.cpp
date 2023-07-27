@@ -1101,38 +1101,28 @@ bool BNO08x::softReset(void)
 
 //Set the operating mode to "On"
 //(This one is for @jerabaul29)
-void BNO08x::modeOn(void)
+bool BNO08x::modeOn(void)
 {
-	shtpData[0] = 2; //On
+  int status = sh2_devOn();
 
-	//Attempt to start communication with sensor
-	sendPacket(CHANNEL_EXECUTABLE, 1); //Transmit packet on channel 1, 1 byte
+  if (status != SH2_OK) {
+    return false;
+  }
 
-	//Read all incoming data and flush it
-	delay(50);
-	while (receivePacket() == true)
-		; //delay(1);
-	delay(50);
-	while (receivePacket() == true)
-		; //delay(1);
+  return true;	
 }
 
 //Set the operating mode to "Sleep"
 //(This one is for @jerabaul29)
-void BNO08x::modeSleep(void)
+bool BNO08x::modeSleep(void)
 {
-	shtpData[0] = 3; //Sleep
+  int status = sh2_devSleep();
 
-	//Attempt to start communication with sensor
-	sendPacket(CHANNEL_EXECUTABLE, 1); //Transmit packet on channel 1, 1 byte
+  if (status != SH2_OK) {
+    return false;
+  }
 
-	//Read all incoming data and flush it
-	delay(50);
-	while (receivePacket() == true)
-		; //delay(1);
-	delay(50);
-	while (receivePacket() == true)
-		; //delay(1);
+  return true;	
 }
 
 // Indicates if we've received a Reset Complete packet. Once it's been read, 
