@@ -1060,6 +1060,12 @@ bool BNO08x::readFRSdata(uint16_t recordID, uint8_t startLocation, uint8_t words
 	}
 }
 
+bool BNO08x::serviceBus(void)
+{
+  sh2_service();
+  return true;
+}
+
 //Send command to reset IC
 //Read all advertisement packets from sensor
 //The sensor has been seen to reset twice if we attempt too much too quickly.
@@ -1159,6 +1165,13 @@ uint8_t BNO08x::resetReason()
 	}
 
 	return (0);
+}
+
+//Get the reason for the last reset
+//1 = POR, 2 = Internal reset, 3 = Watchdog, 4 = External reset, 5 = Other
+uint8_t BNO08x::getResetReason()
+{
+	return prodIds.entry[0].resetCause;
 }
 
 //Given a register value and a Q point, convert to float
@@ -1933,6 +1946,22 @@ bool BNO08x::wasReset(void) {
   _reset_occurred = false;
 
   return x;
+}
+
+/*!  @brief Request ProdID from sensor
+ *   @returns True if chip responded successfully
+ */
+bool BNO08x::requestResetReason(void) {
+  int status;
+
+  // Check connection partially by getting the product id's
+  memset(&prodIds, 0, sizeof(prodIds));
+  status = sh2_getProdIds(&prodIds);
+  if (status != SH2_OK) {
+    return false;
+  }
+
+  return true;
 }
 
 /**

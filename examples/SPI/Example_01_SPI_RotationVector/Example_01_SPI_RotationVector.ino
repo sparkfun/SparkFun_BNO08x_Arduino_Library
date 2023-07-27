@@ -38,6 +38,10 @@
   3V3  --> 3V3
   GND  --> GND
 
+  BNO08x "mode" pins set for SPI:
+  PSO --> 3V3
+  PS1 --> 3V3
+
   Serial.print it out at 115200 baud to serial monitor.
 
   Feel like supporting our work? Buy a board from SparkFun!

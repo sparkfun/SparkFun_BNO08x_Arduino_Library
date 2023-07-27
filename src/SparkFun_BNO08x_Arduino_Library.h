@@ -171,6 +171,10 @@ public:
     void hardwareReset(void);
     bool wasReset(void);
 
+	bool requestResetReason(void); // request ProdID from sensor, which includes
+	// reset reason, and then we update it to local struct prodIds->resetCause
+	uint8_t getResetReason(); // returns prodIds->resetCause
+
     bool enableReport(sh2_SensorId_t sensor, uint32_t interval_us = 10000, uint32_t sensorSpecific = 0);
     bool getSensorEvent();
 	uint8_t getSensorEventID();
@@ -178,6 +182,7 @@ public:
 	void enableDebugging(Stream &debugPort = Serial); //Turn on debug printing. If user doesn't specify then Serial will be used.
 
 	bool softReset();	  //Try to reset the IMU via software
+	bool serviceBus(void);	
 	bool hasReset(); //Returns true if the sensor has reported a reset. Reading this will unflag the reset.
 	uint8_t resetReason(); //Query the IMU for the reason it last reset
 	void modeOn();	  //Use the executable channel to turn the BNO on
