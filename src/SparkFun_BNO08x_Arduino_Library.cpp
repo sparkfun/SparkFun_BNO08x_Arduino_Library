@@ -40,7 +40,11 @@
 
 static int8_t _int_pin, _reset_pin;
 static TwoWire *_i2cPort = NULL;		//The generic connection to user's chosen I2C hardware
+static SPIClass *_spiPort = NULL;  		//The generic connection to user's chosen SPI hardware
 static uint8_t _deviceAddress = BNO08x_DEFAULT_ADDRESS; //Keeps track of I2C address. setI2CAddress changes this.
+unsigned long _spiPortSpeed = 3000000; //Optional user defined port speed
+uint8_t _cs;				 //Pin needed for SPI
+
 
 static sh2_SensorValue_t *_sensor_value = NULL;
 static bool _reset_occurred = false;
@@ -62,10 +66,22 @@ static bool i2c_write(const uint8_t *buffer, size_t len, bool stop = true,
 static bool i2c_read(uint8_t *buffer, size_t len, bool stop = true);
 static bool _i2c_read(uint8_t *buffer, size_t len, bool stop);
 
+static bool spihal_wait_for_int(void);
+static int spihal_write(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len);
+static int spihal_read(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len,
+                       uint32_t *t_us);
+static void spihal_close(sh2_Hal_t *self);
+static int spihal_open(sh2_Hal_t *self);
+
+static bool spi_read(uint8_t *buffer, size_t len, uint8_t sendvalue = 0xFF);
+static bool spi_write(const uint8_t *buffer, size_t len,
+			const uint8_t *prefix_buffer = nullptr, size_t prefix_len = 0);
+			
+
 size_t _maxBufferSize = 32;
 size_t maxBufferSize();		
 
-//Initializes the sensor with basic settings
+//Initializes the sensor with basic settings using I2C
 //Returns false if sensor is not detected
 boolean BNO08x::begin(uint8_t deviceAddress, TwoWire &wirePort)
 {
@@ -87,10 +103,10 @@ boolean BNO08x::begin(uint8_t deviceAddress, TwoWire &wirePort)
     return _init();
 }
 
-boolean BNO08x::beginSPI(uint8_t user_CSPin, uint8_t user_WAKPin, uint8_t user_INTPin, uint8_t user_RSTPin, uint32_t spiPortSpeed, SPIClass &spiPort)
+//Initializes the sensor with basic settings using SPI
+//Returns false if sensor is not detected
+boolean BNO08x::beginSPI(uint8_t user_CSPin, uint8_t user_INTPin, uint8_t user_RSTPin, uint32_t spiPortSpeed, SPIClass &spiPort)
 {
-	_i2cPort = NULL; //This null tells the send/receive functions to use SPI
-
 	//Get user settings
 	_spiPort = &spiPort;
 	_spiPortSpeed = spiPortSpeed;
@@ -98,77 +114,24 @@ boolean BNO08x::beginSPI(uint8_t user_CSPin, uint8_t user_WAKPin, uint8_t user_I
 		_spiPortSpeed = 3000000; //BNO08x max is 3MHz
 
 	_cs = user_CSPin;
-	_wake = user_WAKPin;
-	_int = user_INTPin;
-	_rst = user_RSTPin;
+	_int_pin = user_INTPin;
+	_reset_pin = user_RSTPin;
 
 	pinMode(_cs, OUTPUT);
-	pinMode(_wake, OUTPUT);
-	pinMode(_int, INPUT_PULLUP);
-	pinMode(_rst, OUTPUT);
+	pinMode(_int_pin, INPUT_PULLUP);
+	pinMode(_reset_pin, OUTPUT);
 
 	digitalWrite(_cs, HIGH); //Deselect BNO08x
 
-	//Configure the BNO08x for SPI communication
-	digitalWrite(_wake, HIGH); //Before boot up the PS0/WAK pin must be high to enter SPI mode
-	digitalWrite(_rst, LOW);   //Reset BNO08x
-	delay(2);				   //Min length not specified in datasheet?
-	digitalWrite(_rst, HIGH);  //Bring out of reset
-
-	//Wait for first assertion of INT before using WAK pin. Can take ~104ms
-	waitForSPI();
-
-	//if(wakeBNO08x() == false) //Bring IC out of sleep after reset
-	//  Serial.println("BNO08x did not wake up");
-
 	_spiPort->begin(); //Turn on SPI hardware
 
-	//At system startup, the hub must send its full advertisement message (see 5.2 and 5.3) to the
-	//host. It must not send any other data until this step is complete.
-	//When BNO08x first boots it broadcasts big startup packet
-	//Read it and dump it
-	waitForSPI(); //Wait for assertion of INT before reading advert message.
-	receivePacket();
+	_HAL.open = spihal_open;
+	_HAL.close = spihal_close;
+	_HAL.read = spihal_read;
+	_HAL.write = spihal_write;
+	_HAL.getTimeUs = hal_getTimeUs;
 
-	//The BNO08x will then transmit an unsolicited Initialize Response (see 6.4.5.2)
-	//Read it and dump it
-	waitForSPI(); //Wait for assertion of INT before reading Init response
-	receivePacket();
-
-	//Check communication with device
-	shtpData[0] = SHTP_REPORT_PRODUCT_ID_REQUEST; //Request the product ID and reset info
-	shtpData[1] = 0;							  //Reserved
-
-	//Transmit packet on channel 2, 2 bytes
-	sendPacket(CHANNEL_CONTROL, 2);
-
-	//Now we wait for response
-	waitForSPI();
-	if (receivePacket() == true)
-	{
-		if (shtpData[0] == SHTP_REPORT_PRODUCT_ID_RESPONSE)
-		{
-			if (_printDebug == true)
-			{
-				_debugPort->print(F("SW Version Major: 0x"));
-				_debugPort->print(shtpData[2], HEX);
-				_debugPort->print(F(" SW Version Minor: 0x"));
-				_debugPort->print(shtpData[3], HEX);
-				uint32_t SW_Part_Number = ((uint32_t)shtpData[7] << 24) | ((uint32_t)shtpData[6] << 16) | ((uint32_t)shtpData[5] << 8) | ((uint32_t)shtpData[4]);
-				_debugPort->print(F(" SW Part Number: 0x"));
-				_debugPort->print(SW_Part_Number, HEX);
-				uint32_t SW_Build_Number = ((uint32_t)shtpData[11] << 24) | ((uint32_t)shtpData[10] << 16) | ((uint32_t)shtpData[9] << 8) | ((uint32_t)shtpData[8]);
-				_debugPort->print(F(" SW Build Number: 0x"));
-				_debugPort->print(SW_Build_Number, HEX);
-				uint16_t SW_Version_Patch = ((uint16_t)shtpData[13] << 8) | ((uint16_t)shtpData[12]);
-				_debugPort->print(F(" SW Version Patch: 0x"));
-				_debugPort->println(SW_Version_Patch, HEX);
-			}
-			return (true);
-		}
-	}
-
-	return (false); //Something went wrong
+    return _init();
 }
 
 //Calling this function with nothing sets the debug port to Serial
@@ -186,261 +149,261 @@ bool BNO08x::dataAvailable(void)
 	return (getReadings() != 0);
 }
 
-uint16_t BNO08x::getReadings(void)
-{
-	//If we have an interrupt pin connection available, check if data is available.
-	//If int pin is not set, then we'll rely on receivePacket() to timeout
-	//See issue 13: https://github.com/sparkfun/SparkFun_BNO08x_Arduino_Library/issues/13
-	if (_int != 255)
-	{
-		if (digitalRead(_int) == HIGH)
-			return 0;
-	}
+// uint16_t BNO08x::getReadings(void)
+// {
+// 	//If we have an interrupt pin connection available, check if data is available.
+// 	//If int pin is not set, then we'll rely on receivePacket() to timeout
+// 	//See issue 13: https://github.com/sparkfun/SparkFun_BNO08x_Arduino_Library/issues/13
+// 	if (_int_pin != 255)
+// 	{
+// 		if (digitalRead(_int_pin) == HIGH)
+// 			return 0;
+// 	}
 
-	if (receivePacket() == true)
-	{
-		//Check to see if this packet is a sensor reporting its data to us
-		if (shtpHeader[2] == CHANNEL_REPORTS && shtpData[0] == SHTP_REPORT_BASE_TIMESTAMP)
-		{
-			return parseInputReport(); //This will update the rawAccelX, etc variables depending on which feature report is found
-		}
-		else if (shtpHeader[2] == CHANNEL_CONTROL)
-		{
-			return parseCommandReport(); //This will update responses to commands, calibrationStatus, etc.
-		}
-		else if(shtpHeader[2] == CHANNEL_GYRO)
-		{
-		return parseInputReport(); //This will update the rawAccelX, etc variables depending on which feature report is found
-		}
-	}
-	return 0;
-}
+// 	if (receivePacket() == true)
+// 	{
+// 		//Check to see if this packet is a sensor reporting its data to us
+// 		if (shtpHeader[2] == CHANNEL_REPORTS && shtpData[0] == SHTP_REPORT_BASE_TIMESTAMP)
+// 		{
+// 			return parseInputReport(); //This will update the rawAccelX, etc variables depending on which feature report is found
+// 		}
+// 		else if (shtpHeader[2] == CHANNEL_CONTROL)
+// 		{
+// 			return parseCommandReport(); //This will update responses to commands, calibrationStatus, etc.
+// 		}
+// 		else if(shtpHeader[2] == CHANNEL_GYRO)
+// 		{
+// 		return parseInputReport(); //This will update the rawAccelX, etc variables depending on which feature report is found
+// 		}
+// 	}
+// 	return 0;
+// }
 
-//This function pulls the data from the command response report
+// //This function pulls the data from the command response report
 
-//Unit responds with packet that contains the following:
-//shtpHeader[0:3]: First, a 4 byte header
-//shtpData[0]: The Report ID
-//shtpData[1]: Sequence number (See 6.5.18.2)
-//shtpData[2]: Command
-//shtpData[3]: Command Sequence Number
-//shtpData[4]: Response Sequence Number
-//shtpData[5 + 0]: R0
-//shtpData[5 + 1]: R1
-//shtpData[5 + 2]: R2
-//shtpData[5 + 3]: R3
-//shtpData[5 + 4]: R4
-//shtpData[5 + 5]: R5
-//shtpData[5 + 6]: R6
-//shtpData[5 + 7]: R7
-//shtpData[5 + 8]: R8
-uint16_t BNO08x::parseCommandReport(void)
-{
-	if (shtpData[0] == SHTP_REPORT_COMMAND_RESPONSE)
-	{
-		//The BNO08x responds with this report to command requests. It's up to use to remember which command we issued.
-		uint8_t command = shtpData[2]; //This is the Command byte of the response
+// //Unit responds with packet that contains the following:
+// //shtpHeader[0:3]: First, a 4 byte header
+// //shtpData[0]: The Report ID
+// //shtpData[1]: Sequence number (See 6.5.18.2)
+// //shtpData[2]: Command
+// //shtpData[3]: Command Sequence Number
+// //shtpData[4]: Response Sequence Number
+// //shtpData[5 + 0]: R0
+// //shtpData[5 + 1]: R1
+// //shtpData[5 + 2]: R2
+// //shtpData[5 + 3]: R3
+// //shtpData[5 + 4]: R4
+// //shtpData[5 + 5]: R5
+// //shtpData[5 + 6]: R6
+// //shtpData[5 + 7]: R7
+// //shtpData[5 + 8]: R8
+// uint16_t BNO08x::parseCommandReport(void)
+// {
+// 	if (shtpData[0] == SHTP_REPORT_COMMAND_RESPONSE)
+// 	{
+// 		//The BNO08x responds with this report to command requests. It's up to use to remember which command we issued.
+// 		uint8_t command = shtpData[2]; //This is the Command byte of the response
 
-		if (command == COMMAND_ME_CALIBRATE)
-		{
-			calibrationStatus = shtpData[5 + 0]; //R0 - Status (0 = success, non-zero = fail)
-		}
-		return shtpData[0];
-	}
-	else
-	{
-		//This sensor report ID is unhandled.
-		//See reference manual to add additional feature reports as needed
-	}
+// 		if (command == COMMAND_ME_CALIBRATE)
+// 		{
+// 			calibrationStatus = shtpData[5 + 0]; //R0 - Status (0 = success, non-zero = fail)
+// 		}
+// 		return shtpData[0];
+// 	}
+// 	else
+// 	{
+// 		//This sensor report ID is unhandled.
+// 		//See reference manual to add additional feature reports as needed
+// 	}
 
-	//TODO additional feature reports may be strung together. Parse them all.
-	return 0;
-}
+// 	//TODO additional feature reports may be strung together. Parse them all.
+// 	return 0;
+// }
 
-//This function pulls the data from the input report
-//The input reports vary in length so this function stores the various 16-bit values as globals
+// //This function pulls the data from the input report
+// //The input reports vary in length so this function stores the various 16-bit values as globals
 
-//Unit responds with packet that contains the following:
-//shtpHeader[0:3]: First, a 4 byte header
-//shtpData[0:4]: Then a 5 byte timestamp of microsecond clicks since reading was taken
-//shtpData[5 + 0]: Then a feature report ID (0x01 for Accel, 0x05 for Rotation Vector)
-//shtpData[5 + 1]: Sequence number (See 6.5.18.2)
-//shtpData[5 + 2]: Status
-//shtpData[3]: Delay
-//shtpData[4:5]: i/accel x/gyro x/etc
-//shtpData[6:7]: j/accel y/gyro y/etc
-//shtpData[8:9]: k/accel z/gyro z/etc
-//shtpData[10:11]: real/gyro temp/etc
-//shtpData[12:13]: Accuracy estimate
-uint16_t BNO08x::parseInputReport(void)
-{
-	//Calculate the number of data bytes in this packet
-	int16_t dataLength = ((uint16_t)shtpHeader[1] << 8 | shtpHeader[0]);
-	dataLength &= ~(1 << 15); //Clear the MSbit. This bit indicates if this package is a continuation of the last.
-	//Ignore it for now. TODO catch this as an error and exit
+// //Unit responds with packet that contains the following:
+// //shtpHeader[0:3]: First, a 4 byte header
+// //shtpData[0:4]: Then a 5 byte timestamp of microsecond clicks since reading was taken
+// //shtpData[5 + 0]: Then a feature report ID (0x01 for Accel, 0x05 for Rotation Vector)
+// //shtpData[5 + 1]: Sequence number (See 6.5.18.2)
+// //shtpData[5 + 2]: Status
+// //shtpData[3]: Delay
+// //shtpData[4:5]: i/accel x/gyro x/etc
+// //shtpData[6:7]: j/accel y/gyro y/etc
+// //shtpData[8:9]: k/accel z/gyro z/etc
+// //shtpData[10:11]: real/gyro temp/etc
+// //shtpData[12:13]: Accuracy estimate
+// uint16_t BNO08x::parseInputReport(void)
+// {
+// 	//Calculate the number of data bytes in this packet
+// 	int16_t dataLength = ((uint16_t)shtpHeader[1] << 8 | shtpHeader[0]);
+// 	dataLength &= ~(1 << 15); //Clear the MSbit. This bit indicates if this package is a continuation of the last.
+// 	//Ignore it for now. TODO catch this as an error and exit
 
-	dataLength -= 4; //Remove the header bytes from the data count
+// 	dataLength -= 4; //Remove the header bytes from the data count
 
-	timeStamp = ((uint32_t)shtpData[4] << (8 * 3)) | ((uint32_t)shtpData[3] << (8 * 2)) | ((uint32_t)shtpData[2] << (8 * 1)) | ((uint32_t)shtpData[1] << (8 * 0));
+// 	timeStamp = ((uint32_t)shtpData[4] << (8 * 3)) | ((uint32_t)shtpData[3] << (8 * 2)) | ((uint32_t)shtpData[2] << (8 * 1)) | ((uint32_t)shtpData[1] << (8 * 0));
 
-	// The gyro-integrated input reports are sent via the special gyro channel and do no include the usual ID, sequence, and status fields
-	if(shtpHeader[2] == CHANNEL_GYRO) {
-		rawQuatI = (uint16_t)shtpData[1] << 8 | shtpData[0];
-		rawQuatJ = (uint16_t)shtpData[3] << 8 | shtpData[2];
-		rawQuatK = (uint16_t)shtpData[5] << 8 | shtpData[4];
-		rawQuatReal = (uint16_t)shtpData[7] << 8 | shtpData[6];
-		rawFastGyroX = (uint16_t)shtpData[9] << 8 | shtpData[8];
-		rawFastGyroY = (uint16_t)shtpData[11] << 8 | shtpData[10];
-		rawFastGyroZ = (uint16_t)shtpData[13] << 8 | shtpData[12];
+// 	// The gyro-integrated input reports are sent via the special gyro channel and do no include the usual ID, sequence, and status fields
+// 	if(shtpHeader[2] == CHANNEL_GYRO) {
+// 		rawQuatI = (uint16_t)shtpData[1] << 8 | shtpData[0];
+// 		rawQuatJ = (uint16_t)shtpData[3] << 8 | shtpData[2];
+// 		rawQuatK = (uint16_t)shtpData[5] << 8 | shtpData[4];
+// 		rawQuatReal = (uint16_t)shtpData[7] << 8 | shtpData[6];
+// 		rawFastGyroX = (uint16_t)shtpData[9] << 8 | shtpData[8];
+// 		rawFastGyroY = (uint16_t)shtpData[11] << 8 | shtpData[10];
+// 		rawFastGyroZ = (uint16_t)shtpData[13] << 8 | shtpData[12];
 
-		return SENSOR_REPORTID_GYRO_INTEGRATED_ROTATION_VECTOR;
-	}
+// 		return SENSOR_REPORTID_GYRO_INTEGRATED_ROTATION_VECTOR;
+// 	}
 
-	uint8_t status = shtpData[5 + 2] & 0x03; //Get status bits
-	uint16_t data1 = (uint16_t)shtpData[5 + 5] << 8 | shtpData[5 + 4];
-	uint16_t data2 = (uint16_t)shtpData[5 + 7] << 8 | shtpData[5 + 6];
-	uint16_t data3 = (uint16_t)shtpData[5 + 9] << 8 | shtpData[5 + 8];
-	uint16_t data4 = 0;
-	uint16_t data5 = 0; //We would need to change this to uin32_t to capture time stamp value on Raw Accel/Gyro/Mag reports
-	uint16_t data6 = 0;
+// 	uint8_t status = shtpData[5 + 2] & 0x03; //Get status bits
+// 	uint16_t data1 = (uint16_t)shtpData[5 + 5] << 8 | shtpData[5 + 4];
+// 	uint16_t data2 = (uint16_t)shtpData[5 + 7] << 8 | shtpData[5 + 6];
+// 	uint16_t data3 = (uint16_t)shtpData[5 + 9] << 8 | shtpData[5 + 8];
+// 	uint16_t data4 = 0;
+// 	uint16_t data5 = 0; //We would need to change this to uin32_t to capture time stamp value on Raw Accel/Gyro/Mag reports
+// 	uint16_t data6 = 0;
 
-	if (dataLength - 5 > 9)
-	{
-		data4 = (uint16_t)shtpData[5 + 11] << 8 | shtpData[5 + 10];
-	}
-	if (dataLength - 5 > 11)
-	{
-		data5 = (uint16_t)shtpData[5 + 13] << 8 | shtpData[5 + 12];
-	}
-	if (dataLength - 5 > 13)
-	{
-		data6 = (uint16_t)shtpData[5 + 15] << 8 | shtpData[5 + 14];
-	}
+// 	if (dataLength - 5 > 9)
+// 	{
+// 		data4 = (uint16_t)shtpData[5 + 11] << 8 | shtpData[5 + 10];
+// 	}
+// 	if (dataLength - 5 > 11)
+// 	{
+// 		data5 = (uint16_t)shtpData[5 + 13] << 8 | shtpData[5 + 12];
+// 	}
+// 	if (dataLength - 5 > 13)
+// 	{
+// 		data6 = (uint16_t)shtpData[5 + 15] << 8 | shtpData[5 + 14];
+// 	}
 
 
-	//Store these generic values to their proper global variable
-	if (shtpData[5] == SENSOR_REPORTID_ACCELEROMETER)
-	{
-		accelAccuracy = status;
-		rawAccelX = data1;
-		rawAccelY = data2;
-		rawAccelZ = data3;
-	}
-	else if (shtpData[5] == SENSOR_REPORTID_LINEAR_ACCELERATION)
-	{
-		accelLinAccuracy = status;
-		rawLinAccelX = data1;
-		rawLinAccelY = data2;
-		rawLinAccelZ = data3;
-	}
-	else if (shtpData[5] == SENSOR_REPORTID_GYROSCOPE_CALIBRATED)
-	{	
-		gyroAccuracy = status;
-		rawGyroX = data1;
-		rawGyroY = data2;
-		rawGyroZ = data3;
-	}
-	else if (shtpData[5] == SENSOR_REPORTID_UNCALIBRATED_GYRO)
-	{
-		UncalibGyroAccuracy = status;
-		rawUncalibGyroX = data1;
-		rawUncalibGyroY = data2;
-		rawUncalibGyroZ = data3;
-		rawBiasX  = data4;
-		rawBiasY  = data5;
-		rawBiasZ  = data6;
-	}
-	else if (shtpData[5] == SENSOR_REPORTID_MAGNETIC_FIELD)
-	{
-		magAccuracy = status;
-		rawMagX = data1;
-		rawMagY = data2;
-		rawMagZ = data3;
-	}
-	else if (shtpData[5] == SENSOR_REPORTID_ROTATION_VECTOR ||
-		shtpData[5] == SENSOR_REPORTID_GAME_ROTATION_VECTOR ||
-		shtpData[5] == SENSOR_REPORTID_AR_VR_STABILIZED_ROTATION_VECTOR ||
-		shtpData[5] == SENSOR_REPORTID_AR_VR_STABILIZED_GAME_ROTATION_VECTOR)
-	{
-		quatAccuracy = status;
-		rawQuatI = data1;
-		rawQuatJ = data2;
-		rawQuatK = data3;
-		rawQuatReal = data4;
+// 	//Store these generic values to their proper global variable
+// 	if (shtpData[5] == SENSOR_REPORTID_ACCELEROMETER)
+// 	{
+// 		accelAccuracy = status;
+// 		rawAccelX = data1;
+// 		rawAccelY = data2;
+// 		rawAccelZ = data3;
+// 	}
+// 	else if (shtpData[5] == SENSOR_REPORTID_LINEAR_ACCELERATION)
+// 	{
+// 		accelLinAccuracy = status;
+// 		rawLinAccelX = data1;
+// 		rawLinAccelY = data2;
+// 		rawLinAccelZ = data3;
+// 	}
+// 	else if (shtpData[5] == SENSOR_REPORTID_GYROSCOPE_CALIBRATED)
+// 	{	
+// 		gyroAccuracy = status;
+// 		rawGyroX = data1;
+// 		rawGyroY = data2;
+// 		rawGyroZ = data3;
+// 	}
+// 	else if (shtpData[5] == SENSOR_REPORTID_UNCALIBRATED_GYRO)
+// 	{
+// 		UncalibGyroAccuracy = status;
+// 		rawUncalibGyroX = data1;
+// 		rawUncalibGyroY = data2;
+// 		rawUncalibGyroZ = data3;
+// 		rawBiasX  = data4;
+// 		rawBiasY  = data5;
+// 		rawBiasZ  = data6;
+// 	}
+// 	else if (shtpData[5] == SENSOR_REPORTID_MAGNETIC_FIELD)
+// 	{
+// 		magAccuracy = status;
+// 		rawMagX = data1;
+// 		rawMagY = data2;
+// 		rawMagZ = data3;
+// 	}
+// 	else if (shtpData[5] == SENSOR_REPORTID_ROTATION_VECTOR ||
+// 		shtpData[5] == SENSOR_REPORTID_GAME_ROTATION_VECTOR ||
+// 		shtpData[5] == SENSOR_REPORTID_AR_VR_STABILIZED_ROTATION_VECTOR ||
+// 		shtpData[5] == SENSOR_REPORTID_AR_VR_STABILIZED_GAME_ROTATION_VECTOR)
+// 	{
+// 		quatAccuracy = status;
+// 		rawQuatI = data1;
+// 		rawQuatJ = data2;
+// 		rawQuatK = data3;
+// 		rawQuatReal = data4;
 
-		//Only available on rotation vector and ar/vr stabilized rotation vector,
-		// not game rot vector and not ar/vr stabilized rotation vector
-		rawQuatRadianAccuracy = data5;
-	}
-	else if (shtpData[5] == SENSOR_REPORTID_TAP_DETECTOR)
-	{
-		tapDetector = shtpData[5 + 4]; //Byte 4 only
-	}
-	else if (shtpData[5] == SENSOR_REPORTID_STEP_COUNTER)
-	{
-		stepCount = data3; //Bytes 8/9
-	}
-	else if (shtpData[5] == SENSOR_REPORTID_STABILITY_CLASSIFIER)
-	{
-		stabilityClassifier = shtpData[5 + 4]; //Byte 4 only
-	}
-	else if (shtpData[5] == SENSOR_REPORTID_PERSONAL_ACTIVITY_CLASSIFIER)
-	{
-		activityClassifier = shtpData[5 + 5]; //Most likely state
-	}
-	else if (shtpData[5] == SENSOR_REPORTID_RAW_ACCELEROMETER)
-	{
-		memsRawAccelX = data1;
-		memsRawAccelY = data2;
-		memsRawAccelZ = data3;
-	}
-	else if (shtpData[5] == SENSOR_REPORTID_RAW_GYROSCOPE)
-	{
-		memsRawGyroX = data1;
-		memsRawGyroY = data2;
-		memsRawGyroZ = data3;
-	}
-	else if (shtpData[5] == SENSOR_REPORTID_RAW_MAGNETOMETER)
-	{
-		memsRawMagX = data1;
-		memsRawMagY = data2;
-		memsRawMagZ = data3;
-	}
-	else if (shtpData[5] == SHTP_REPORT_COMMAND_RESPONSE)
-	{
-		if (_printDebug == true)
-		{
-			_debugPort->println(F("!"));
-		}
-		//The BNO08x responds with this report to command requests. It's up to use to remember which command we issued.
-		uint8_t command = shtpData[5 + 2]; //This is the Command byte of the response
+// 		//Only available on rotation vector and ar/vr stabilized rotation vector,
+// 		// not game rot vector and not ar/vr stabilized rotation vector
+// 		rawQuatRadianAccuracy = data5;
+// 	}
+// 	else if (shtpData[5] == SENSOR_REPORTID_TAP_DETECTOR)
+// 	{
+// 		tapDetector = shtpData[5 + 4]; //Byte 4 only
+// 	}
+// 	else if (shtpData[5] == SENSOR_REPORTID_STEP_COUNTER)
+// 	{
+// 		stepCount = data3; //Bytes 8/9
+// 	}
+// 	else if (shtpData[5] == SENSOR_REPORTID_STABILITY_CLASSIFIER)
+// 	{
+// 		stabilityClassifier = shtpData[5 + 4]; //Byte 4 only
+// 	}
+// 	else if (shtpData[5] == SENSOR_REPORTID_PERSONAL_ACTIVITY_CLASSIFIER)
+// 	{
+// 		activityClassifier = shtpData[5 + 5]; //Most likely state
+// 	}
+// 	else if (shtpData[5] == SENSOR_REPORTID_RAW_ACCELEROMETER)
+// 	{
+// 		memsRawAccelX = data1;
+// 		memsRawAccelY = data2;
+// 		memsRawAccelZ = data3;
+// 	}
+// 	else if (shtpData[5] == SENSOR_REPORTID_RAW_GYROSCOPE)
+// 	{
+// 		memsRawGyroX = data1;
+// 		memsRawGyroY = data2;
+// 		memsRawGyroZ = data3;
+// 	}
+// 	else if (shtpData[5] == SENSOR_REPORTID_RAW_MAGNETOMETER)
+// 	{
+// 		memsRawMagX = data1;
+// 		memsRawMagY = data2;
+// 		memsRawMagZ = data3;
+// 	}
+// 	else if (shtpData[5] == SHTP_REPORT_COMMAND_RESPONSE)
+// 	{
+// 		if (_printDebug == true)
+// 		{
+// 			_debugPort->println(F("!"));
+// 		}
+// 		//The BNO08x responds with this report to command requests. It's up to use to remember which command we issued.
+// 		uint8_t command = shtpData[5 + 2]; //This is the Command byte of the response
 
-		if (command == COMMAND_ME_CALIBRATE)
-		{
-			if (_printDebug == true)
-			{
-				_debugPort->println(F("ME Cal report found!"));
-			}
-			calibrationStatus = shtpData[5 + 5]; //R0 - Status (0 = success, non-zero = fail)
-		}
-	}
-	else if(shtpData[5] == SENSOR_REPORTID_GRAVITY)
-	{
-		gravityAccuracy = status;
-		gravityX = data1;
-		gravityY = data2;
-		gravityZ = data3;
-	}
-	else
-	{
-		//This sensor report ID is unhandled.
-		//See reference manual to add additional feature reports as needed
-		return 0;
-	}
+// 		if (command == COMMAND_ME_CALIBRATE)
+// 		{
+// 			if (_printDebug == true)
+// 			{
+// 				_debugPort->println(F("ME Cal report found!"));
+// 			}
+// 			calibrationStatus = shtpData[5 + 5]; //R0 - Status (0 = success, non-zero = fail)
+// 		}
+// 	}
+// 	else if(shtpData[5] == SENSOR_REPORTID_GRAVITY)
+// 	{
+// 		gravityAccuracy = status;
+// 		gravityX = data1;
+// 		gravityY = data2;
+// 		gravityZ = data3;
+// 	}
+// 	else
+// 	{
+// 		//This sensor report ID is unhandled.
+// 		//See reference manual to add additional feature reports as needed
+// 		return 0;
+// 	}
 
-	//TODO additional feature reports may be strung together. Parse them all.
-	return shtpData[5];
-}
+// 	//TODO additional feature reports may be strung together. Parse them all.
+// 	return shtpData[5];
+// }
 
 // Quaternion to Euler conversion
 // https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
@@ -1609,7 +1572,7 @@ boolean BNO08x::waitForSPI()
 {
 	for (uint8_t counter = 0; counter < 125; counter++) //Don't got more than 255
 	{
-		if (digitalRead(_int) == LOW)
+		if (digitalRead(_int_pin) == LOW)
 			return (true);
 		if (_printDebug == true)
 			_debugPort->println(F("SPI Wait"));
@@ -1621,124 +1584,124 @@ boolean BNO08x::waitForSPI()
 	return (false);
 }
 
-//Check to see if there is any new data available
-//Read the contents of the incoming packet into the shtpData array
-boolean BNO08x::receivePacket(void)
-{
-	if (_i2cPort == NULL) //Do SPI
-	{
-		if (digitalRead(_int) == HIGH)
-			return (false); //Data is not available
+// //Check to see if there is any new data available
+// //Read the contents of the incoming packet into the shtpData array
+// boolean BNO08x::receivePacket(void)
+// {
+// 	if (_i2cPort == NULL) //Do SPI
+// 	{
+// 		if (digitalRead(_int_pin) == HIGH)
+// 			return (false); //Data is not available
 
-		//Old way: if (waitForSPI() == false) return (false); //Something went wrong
+// 		//Old way: if (waitForSPI() == false) return (false); //Something went wrong
 
-		//Get first four bytes to find out how much data we need to read
+// 		//Get first four bytes to find out how much data we need to read
 
-		_spiPort->beginTransaction(SPISettings(_spiPortSpeed, MSBFIRST, SPI_MODE3));
-		digitalWrite(_cs, LOW);
+// 		_spiPort->beginTransaction(SPISettings(_spiPortSpeed, MSBFIRST, SPI_MODE3));
+// 		digitalWrite(_cs, LOW);
 
-		//Get the first four bytes, aka the packet header
-		uint8_t packetLSB = _spiPort->transfer(0);
-		uint8_t packetMSB = _spiPort->transfer(0);
-		uint8_t channelNumber = _spiPort->transfer(0);
-		uint8_t sequenceNumber = _spiPort->transfer(0); //Not sure if we need to store this or not
+// 		//Get the first four bytes, aka the packet header
+// 		uint8_t packetLSB = _spiPort->transfer(0);
+// 		uint8_t packetMSB = _spiPort->transfer(0);
+// 		uint8_t channelNumber = _spiPort->transfer(0);
+// 		uint8_t sequenceNumber = _spiPort->transfer(0); //Not sure if we need to store this or not
 
-		//Store the header info
-		shtpHeader[0] = packetLSB;
-		shtpHeader[1] = packetMSB;
-		shtpHeader[2] = channelNumber;
-		shtpHeader[3] = sequenceNumber;
+// 		//Store the header info
+// 		shtpHeader[0] = packetLSB;
+// 		shtpHeader[1] = packetMSB;
+// 		shtpHeader[2] = channelNumber;
+// 		shtpHeader[3] = sequenceNumber;
 
-		//Calculate the number of data bytes in this packet
-		uint16_t dataLength = (((uint16_t)packetMSB) << 8) | ((uint16_t)packetLSB);
-		dataLength &= ~(1 << 15); //Clear the MSbit.
-		//This bit indicates if this package is a continuation of the last. Ignore it for now.
-		//TODO catch this as an error and exit
-		if (dataLength == 0)
-		{
-			//Packet is empty
-			printHeader();
-			return (false); //All done
-		}
-		dataLength -= 4; //Remove the header bytes from the data count
+// 		//Calculate the number of data bytes in this packet
+// 		uint16_t dataLength = (((uint16_t)packetMSB) << 8) | ((uint16_t)packetLSB);
+// 		dataLength &= ~(1 << 15); //Clear the MSbit.
+// 		//This bit indicates if this package is a continuation of the last. Ignore it for now.
+// 		//TODO catch this as an error and exit
+// 		if (dataLength == 0)
+// 		{
+// 			//Packet is empty
+// 			printHeader();
+// 			return (false); //All done
+// 		}
+// 		dataLength -= 4; //Remove the header bytes from the data count
 
-		//Read incoming data into the shtpData array
-		for (uint16_t dataSpot = 0; dataSpot < dataLength; dataSpot++)
-		{
-			uint8_t incoming = _spiPort->transfer(0xFF);
-			if (dataSpot < MAX_PACKET_SIZE)	//BNO08x can respond with upto 270 bytes, avoid overflow
-				shtpData[dataSpot] = incoming; //Store data into the shtpData array
-		}
+// 		//Read incoming data into the shtpData array
+// 		for (uint16_t dataSpot = 0; dataSpot < dataLength; dataSpot++)
+// 		{
+// 			uint8_t incoming = _spiPort->transfer(0xFF);
+// 			if (dataSpot < MAX_PACKET_SIZE)	//BNO08x can respond with upto 270 bytes, avoid overflow
+// 				shtpData[dataSpot] = incoming; //Store data into the shtpData array
+// 		}
 
-		digitalWrite(_cs, HIGH); //Release BNO08x
+// 		digitalWrite(_cs, HIGH); //Release BNO08x
 
-		_spiPort->endTransaction();
-		printPacket();
-	}
-	else //Do I2C
-	{
-		int requestFromReturn;
-		requestFromReturn = _i2cPort->requestFrom((uint8_t)_deviceAddress, (size_t)4); //Ask for four bytes to find out how much data we need to read
-		Serial.print("requestFromReturn:");
-		Serial.println(requestFromReturn);
+// 		_spiPort->endTransaction();
+// 		printPacket();
+// 	}
+// 	else //Do I2C
+// 	{
+// 		int requestFromReturn;
+// 		requestFromReturn = _i2cPort->requestFrom((uint8_t)_deviceAddress, (size_t)4); //Ask for four bytes to find out how much data we need to read
+// 		Serial.print("requestFromReturn:");
+// 		Serial.println(requestFromReturn);
 
-		if (waitForI2C() == false)
-			return (false); //Error
+// 		if (waitForI2C() == false)
+// 			return (false); //Error
 
-		//Get the first four bytes, aka the packet header
-		uint8_t packetLSB = _i2cPort->read();
-		uint8_t packetMSB = _i2cPort->read();
-		uint8_t channelNumber = _i2cPort->read();
-		uint8_t sequenceNumber = _i2cPort->read(); //Not sure if we need to store this or not
+// 		//Get the first four bytes, aka the packet header
+// 		uint8_t packetLSB = _i2cPort->read();
+// 		uint8_t packetMSB = _i2cPort->read();
+// 		uint8_t channelNumber = _i2cPort->read();
+// 		uint8_t sequenceNumber = _i2cPort->read(); //Not sure if we need to store this or not
 
-		//Store the header info.
-		shtpHeader[0] = packetLSB;
-		shtpHeader[1] = packetMSB;
-		shtpHeader[2] = channelNumber;
-		shtpHeader[3] = sequenceNumber;
+// 		//Store the header info.
+// 		shtpHeader[0] = packetLSB;
+// 		shtpHeader[1] = packetMSB;
+// 		shtpHeader[2] = channelNumber;
+// 		shtpHeader[3] = sequenceNumber;
 
-		//Calculate the number of data bytes in this packet
-		uint16_t dataLength = (((uint16_t)packetMSB) << 8) | ((uint16_t)packetLSB);
-		dataLength &= ~(1 << 15); //Clear the MSbit.
-		//This bit indicates if this package is a continuation of the last. Ignore it for now.
-		//TODO catch this as an error and exit
+// 		//Calculate the number of data bytes in this packet
+// 		uint16_t dataLength = (((uint16_t)packetMSB) << 8) | ((uint16_t)packetLSB);
+// 		dataLength &= ~(1 << 15); //Clear the MSbit.
+// 		//This bit indicates if this package is a continuation of the last. Ignore it for now.
+// 		//TODO catch this as an error and exit
 
-		if (_printDebug == true)
-		{
-			_debugPort->print(F("receivePacket (I2C): dataLength is: "));
-			_debugPort->println(dataLength);
-			_debugPort->print(F("HEADER IS: "));
-			_debugPort->print(shtpHeader[0]);
-			_debugPort->print(F("\t"));
-			_debugPort->print(shtpHeader[1]);
-			_debugPort->print(F("\t"));
-			_debugPort->print(shtpHeader[2]);
-			_debugPort->print(F("\t"));
-			_debugPort->print(shtpHeader[3]);
-			_debugPort->println(F("\t"));
-		}
+// 		if (_printDebug == true)
+// 		{
+// 			_debugPort->print(F("receivePacket (I2C): dataLength is: "));
+// 			_debugPort->println(dataLength);
+// 			_debugPort->print(F("HEADER IS: "));
+// 			_debugPort->print(shtpHeader[0]);
+// 			_debugPort->print(F("\t"));
+// 			_debugPort->print(shtpHeader[1]);
+// 			_debugPort->print(F("\t"));
+// 			_debugPort->print(shtpHeader[2]);
+// 			_debugPort->print(F("\t"));
+// 			_debugPort->print(shtpHeader[3]);
+// 			_debugPort->println(F("\t"));
+// 		}
 
-		if (dataLength == 0)
-		{
-			//Packet is empty
-			return (false); //All done
-		}
-		dataLength -= 4; //Remove the header bytes from the data count
+// 		if (dataLength == 0)
+// 		{
+// 			//Packet is empty
+// 			return (false); //All done
+// 		}
+// 		dataLength -= 4; //Remove the header bytes from the data count
 
-		getData(dataLength);
-	}
+// 		getData(dataLength);
+// 	}
 
-	// Quickly check for reset complete packet. No need for a seperate parser.
-	// This function is also called after soft reset, so we need to catch this
-	// packet here otherwise we need to check for the reset packet in multiple
-	// places.
-	if (shtpHeader[2] == CHANNEL_EXECUTABLE && shtpData[0] == EXECUTABLE_RESET_COMPLETE) 
-	{
-		_hasReset = true;
-	} 
+// 	// Quickly check for reset complete packet. No need for a seperate parser.
+// 	// This function is also called after soft reset, so we need to catch this
+// 	// packet here otherwise we need to check for the reset packet in multiple
+// 	// places.
+// 	if (shtpHeader[2] == CHANNEL_EXECUTABLE && shtpData[0] == EXECUTABLE_RESET_COMPLETE) 
+// 	{
+// 		_hasReset = true;
+// 	} 
 
-	return (true); //We're done!
-}
+// 	return (true); //We're done!
+// }
 
 //Sends multiple requests to sensor until all data bytes are received from sensor
 //The shtpData buffer has max capacity of MAX_PACKET_SIZE. Any bytes over this amount will be lost.
@@ -1939,7 +1902,7 @@ void BNO08x::printHeader(void)
 bool BNO08x::_init(int32_t sensor_id) {
   int status;
 
-  //hardwareReset();
+  hardwareReset();
 
   // Open SH2 interface (also registers non-sensor event handler.)
   status = sh2_open(&_HAL, hal_callback, NULL);
@@ -2230,9 +2193,8 @@ boolean BNO08x::isConnected()
 
 
 
-
-
-
+  /**************************************** I2C Write/Read Functions
+ * ***********************************************************/
 
 
 /*!
@@ -2323,3 +2285,169 @@ boolean _i2c_read(uint8_t *buffer, size_t len, bool stop) {
   /*!   @brief  How many bytes we can read in a transaction
    *    @return The size of the Wire receive/transmit buffer */
   size_t maxBufferSize() { return _maxBufferSize; }
+
+
+
+
+
+
+
+
+
+  /**************************************** SPI interface
+ * ***********************************************************/
+
+static int spihal_open(sh2_Hal_t *self) {
+  // Serial.println("SPI HAL open");
+
+  spihal_wait_for_int();
+
+  return 0;
+}
+
+static bool spihal_wait_for_int(void) {
+  for (int i = 0; i < 500; i++) {
+    if (!digitalRead(_int_pin))
+      return true;
+    // Serial.print(".");
+    delay(1);
+  }
+  // Serial.println("Timed out!");
+  hal_hardwareReset();
+
+  return false;
+}
+
+static void spihal_close(sh2_Hal_t *self) {
+  // Serial.println("SPI HAL close");
+}
+
+static int spihal_read(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len,
+                       uint32_t *t_us) {
+  // Serial.println("SPI HAL read");
+
+  uint16_t packet_size = 0;
+
+  if (!spihal_wait_for_int()) {
+    return 0;
+  }
+
+  if (!spi_read(pBuffer, 4, 0x00)) {
+    return 0;
+  }
+
+  // Determine amount to read
+  packet_size = (uint16_t)pBuffer[0] | (uint16_t)pBuffer[1] << 8;
+  // Unset the "continue" bit
+  packet_size &= ~0x8000;
+
+  /*
+  Serial.print("Read SHTP header. ");
+  Serial.print("Packet size: ");
+  Serial.print(packet_size);
+  Serial.print(" & buffer size: ");
+  Serial.println(len);
+  */
+
+  if (packet_size > len) {
+    return 0;
+  }
+
+  if (!spihal_wait_for_int()) {
+    return 0;
+  }
+
+  if (!spi_read(pBuffer, packet_size, 0x00)) {
+    return 0;
+  }
+
+  return packet_size;
+}
+
+static int spihal_write(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len) {
+  // Serial.print("SPI HAL write packet size: ");
+  // Serial.println(len);
+
+  if (!spihal_wait_for_int()) {
+    return 0;
+  }
+
+  spi_write(pBuffer, len);
+
+  return len;
+}
+
+
+
+
+
+  /**************************************** SPI WRITE/READ Functions
+ * ***********************************************************/
+
+/*!
+ *    @brief  Read from SPI into a buffer from the SPI device, with transaction
+ * management.
+ *    @param  buffer Pointer to buffer of data to read into
+ *    @param  len Number of bytes from buffer to read.
+ *    @param  sendvalue The 8-bits of data to write when doing the data read,
+ * defaults to 0xFF
+ *    @return Always returns true because there's no way to test success of SPI
+ * writes
+ */
+static bool spi_read(uint8_t *buffer, size_t len, uint8_t sendvalue) {
+  memset(buffer, sendvalue, len); // clear out existing buffer
+
+	_spiPort->beginTransaction(SPISettings(_spiPortSpeed, MSBFIRST, SPI_MODE3));
+	digitalWrite(_cs, LOW);
+
+  _spiPort->transfer(buffer, len);
+
+  digitalWrite(_cs, HIGH);
+  _spiPort->endTransaction();
+
+  return true;
+}
+
+/*!
+ *    @brief  Write a buffer or two to the SPI device, with transaction
+ * management.
+ *    @param  buffer Pointer to buffer of data to write
+ *    @param  len Number of bytes from buffer to write
+ *    @param  prefix_buffer Pointer to optional array of data to write before
+ * buffer.
+ *    @param  prefix_len Number of bytes from prefix buffer to write
+ *    @return Always returns true because there's no way to test success of SPI
+ * writes
+ */
+static bool spi_write(const uint8_t *buffer, size_t len,
+                               const uint8_t *prefix_buffer,
+                               size_t prefix_len) {
+
+	_spiPort->beginTransaction(SPISettings(_spiPortSpeed, MSBFIRST, SPI_MODE3));
+	digitalWrite(_cs, LOW);
+
+  // do the writing
+#if defined(ARDUINO_ARCH_ESP32)
+  if (_spiPort) {
+    // if (prefix_len > 0) {
+    //   _spiPort->transferBytes(prefix_buffer, nullptr, prefix_len);
+    // }
+    if (len > 0) {
+      _spiPort->transferBytes(buffer, nullptr, len);
+    }
+  } else
+#endif
+  {
+    // for (size_t i = 0; i < prefix_len; i++) {
+    //   _spiPort->transfer(prefix_buffer[i]);
+    // }
+    for (size_t i = 0; i < len; i++) {
+      _spiPort->transfer(buffer[i]);
+    }
+  }
+
+  digitalWrite(_cs, HIGH);
+  _spiPort->endTransaction();
+
+  return true;
+}

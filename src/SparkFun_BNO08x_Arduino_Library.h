@@ -162,6 +162,7 @@ class BNO08x
 {
 public:
 	boolean begin(uint8_t deviceAddress = BNO08x_DEFAULT_ADDRESS, TwoWire &wirePort = Wire); //By default use the default I2C addres, and use Wire port
+	boolean beginSPI(uint8_t user_CSPin, uint8_t user_INTPin, uint8_t user_RSTPin, uint32_t spiPortSpeed = 1000000, SPIClass &spiPort = SPI);
 	boolean isConnected();
 
     sh2_ProductIds_t prodIds; ///< The product IDs returned by the sensor
@@ -173,8 +174,6 @@ public:
     bool enableReport(sh2_SensorId_t sensor, uint32_t interval_us = 10000, uint32_t sensorSpecific = 0);
     bool getSensorEvent();
 	uint8_t getSensorEventID();
-
-	boolean beginSPI(uint8_t user_CSPin, uint8_t user_WAKPin, uint8_t user_INTPin, uint8_t user_RSTPin, uint32_t spiPortSpeed = 3000000, SPIClass &spiPort = SPI);
 
 	void enableDebugging(Stream &debugPort = Serial); //Turn on debug printing. If user doesn't specify then Serial will be used.
 
@@ -333,17 +332,13 @@ public:
 	uint8_t commandSequenceNumber = 0;				//Commands have a seqNum as well. These are inside command packet, the header uses its own seqNum per channel
 	uint32_t metaData[MAX_METADATA_SIZE];			//There is more than 10 words in a metadata record but we'll stop at Q point 3
 
+//	unsigned long _spiPortSpeed; //Optional user defined port speed
+//	uint8_t _cs;				 //Pins needed for SPI
+
 private:
 
 	Stream *_debugPort;			 //The stream to send debug messages to if enabled. Usually Serial.
 	boolean _printDebug = false; //Flag to print debugging variables
-
-	SPIClass *_spiPort;			 //The generic connection to user's chosen SPI hardware
-	unsigned long _spiPortSpeed; //Optional user defined port speed
-	uint8_t _cs;				 //Pins needed for SPI
-	uint8_t _wake;
-	uint8_t _int;
-	uint8_t _rst;
 
 	bool _hasReset = false;		// Keeps track of any Reset Complete packets we receive. 
 
