@@ -14,6 +14,10 @@
   for Adafruit Industries. Found here:
   https://github.com/adafruit/Adafruit_BNO08x
 
+  Also, utilizing I2C and SPI read/write functions and code from the Adafruit 
+  BusIO library found here:
+  https://github.com/adafruit/Adafruit_BusIO
+
   The BNO08x IMU is a powerful triple axis gyro/accel/magnetometer coupled with an ARM processor
   to maintain and complete all the complex calculations for various VR, inertial, step counting,
   and movement operations.

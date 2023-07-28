@@ -15,6 +15,11 @@ Some of this library was based off of the Adafruit BNO08x Arduino Library.
 More specifically, the code layers connecting to the HillCrest/Ceva Driver.
 Their original work can be found here:
 https://github.com/adafruit/Adafruit_BNO08x
+
+Also, utilizing I2C and SPI read/write functions and code from the Adafruit 
+BusIO library found here:
+https://github.com/adafruit/Adafruit_BusIO
+
 Thank you Adafruit and your developers for all your hard work put into your Library!
 The following is the License text that they included on their code:
 

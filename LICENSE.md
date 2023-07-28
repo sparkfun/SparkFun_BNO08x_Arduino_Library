@@ -65,3 +65,7 @@ SOFTWARE.
   Also, utilizing code from the Adafruit BNO08x Arduino Library by Bryan Siepert 
   for Adafruit Industries. Found here:
   https://github.com/adafruit/Adafruit_BNO08x
+
+  Also, utilizing I2C and SPI read/write functions and code from the Adafruit 
+  BusIO library found here:
+  https://github.com/adafruit/Adafruit_BusIO

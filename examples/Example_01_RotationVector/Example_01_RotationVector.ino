@@ -20,6 +20,10 @@
   for Adafruit Industries. Found here:
   https://github.com/adafruit/Adafruit_BNO08x
 
+  Also, utilizing I2C and SPI read/write functions and code from the Adafruit 
+  BusIO library found here:
+  https://github.com/adafruit/Adafruit_BusIO
+
   Hardware Connections:
   Plug the sensor into IoT Redboard via QWIIC cable.
   Serial.print it out at 115200 baud to serial monitor.
