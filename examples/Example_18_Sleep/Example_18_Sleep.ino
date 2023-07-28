@@ -3,6 +3,8 @@
 
   This example shows how to use the sleep features of the sensor.
 
+  *Note, in addition to the qwiic cable it also requires INT and RST.
+
   It toggles the sleep mode on/off every 5 seconds.
 
   When awake, this example outputs the i/j/k/real parts of the rotation vector.
@@ -30,18 +32,13 @@
 
   Hardware Connections:
   IoT Readboard --> BNO08x
-  D25  --> CS
-  PICO --> SI
-  POCI --> SO
-  SCK  --> SCK  
+  QWIIC --> QWIIC
   D17  --> INT
   D16  --> RST
-  3V3  --> 3V3
-  GND  --> GND
 
-  BNO08x "mode" pins set for SPI:
-  PSO --> 3V3
-  PS1 --> 3V3
+  BNO08x "mode" jumpers set for I2C (default):
+  PSO: OPEN
+  PS1: OPEN
 
   Plug the sensor into IoT Redboard via QWIIC cable.
   Serial.print it out at 115200 baud to serial monitor.
@@ -53,14 +50,21 @@
 #include "SparkFun_BNO08x_Arduino_Library.h"  // Click here to get the library: http://librarymanager/All#SparkFun_BNO08x
 BNO08x myIMU;
 
-// For SPI, we need some extra pins defined:
+// For reliable interaction with the SHTP bus, we need
+// to use hardware reset control, and monitor the H_INT pin
+// The H_INT pin will go low when its okay to talk on the SHTP bus.
 // Note, these can be other GPIO if you like.
-#define BNO08X_CS 25
-#define BNO08X_INT 17
-#define BNO08X_RST 16
+// Do not define (or set to -1) to not user these features.
+#define BNO08X_INT  17
+//#define BNO08X_INT  -1
+#define BNO08X_RST  16
+//#define BNO08X_RST  -1
 
 unsigned long lastMillis = 0;  // Keep track of time
 bool lastPowerState = true;    // Toggle between "On" and "Sleep"
+
+#define BNO08X_ADDR 0x4B  // SparkFun BNO080 Breakout (Qwiic) defaults to 0x4B
+//#define BNO08X_ADDR 0x4A // Alternate address if ADR jumper is closed
 
 void setup() {
 
@@ -68,7 +72,9 @@ void setup() {
   Serial.println();
   Serial.println("BNO08x Sleep Example");
 
-  if (myIMU.beginSPI(BNO08X_CS, BNO08X_INT, BNO08X_RST) == false) {
+  Wire.begin();
+
+  if (myIMU.begin(BNO08X_ADDR, Wire, BNO08X_INT, BNO08X_RST) == false) {
     Serial.println("BNO08x not detected at default I2C address. Check your jumpers and the hookup guide. Freezing...");
     while (1)
       ;
