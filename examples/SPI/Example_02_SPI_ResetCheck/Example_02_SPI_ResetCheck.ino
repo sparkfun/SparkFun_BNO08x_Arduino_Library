@@ -56,7 +56,7 @@
 BNO08x myIMU;
 
 // For SPI, we need some extra pins defined:
-// Note, these can be toerh GPIO if you like.
+// Note, these can be other GPIO if you like.
 #define BNO08X_CS   25
 #define BNO08X_INT  17
 #define BNO08X_RST  16
