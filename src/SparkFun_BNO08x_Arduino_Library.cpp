@@ -42,7 +42,7 @@
 
 #include "SparkFun_BNO08x_Arduino_Library.h"
 
-static int8_t _int_pin, _reset_pin;
+int8_t _int_pin, _reset_pin;
 static TwoWire *_i2cPort = NULL;		//The generic connection to user's chosen I2C hardware
 static SPIClass *_spiPort = NULL;  		//The generic connection to user's chosen SPI hardware
 static uint8_t _deviceAddress = BNO08x_DEFAULT_ADDRESS; //Keeps track of I2C address. setI2CAddress changes this.
@@ -87,16 +87,32 @@ size_t maxBufferSize();
 
 //Initializes the sensor with basic settings using I2C
 //Returns false if sensor is not detected
-boolean BNO08x::begin(uint8_t deviceAddress, TwoWire &wirePort)
+boolean BNO08x::begin(uint8_t deviceAddress, TwoWire &wirePort, uint8_t user_INTPin, uint8_t user_RSTPin)
 {
   	_deviceAddress = deviceAddress;
   	_i2cPort = &wirePort;
+
+	// if user passes in an INT pin, then lets set that up.
+	if(user_INTPin != -1)
+	{
+		_int_pin = user_INTPin;
+		pinMode(_int_pin, INPUT_PULLUP);
+	}
+
+	// if user passes in an RESET pin, then lets set that up.
+	if(user_RSTPin != -1)
+	{
+		_reset_pin = user_RSTPin;
+		pinMode(_reset_pin, INPUT_PULLUP);
+	}
+
+  	if(_int_pin != -1) spihal_wait_for_int();
 
   	if (isConnected() == false) // Check for sensor by verifying ACK response
     	return (false); 
 
 	Serial.println(F("I2C address found"));
-    delay(1000);
+    //delay(1000);
 
     _HAL.open = i2chal_open;
     _HAL.close = i2chal_close;
@@ -1679,22 +1695,6 @@ bool BNO08x::wasReset(void) {
   return x;
 }
 
-/*!  @brief Request ProdID from sensor
- *   @returns True if chip responded successfully
- */
-bool BNO08x::requestResetReason(void) {
-  int status;
-
-  // Check connection partially by getting the product id's
-  memset(&prodIds, 0, sizeof(prodIds));
-  status = sh2_getProdIds(&prodIds);
-  if (status != SH2_OK) {
-    return false;
-  }
-
-  return true;
-}
-
 /**
  * @brief Fill the given sensor value object with a new report
  *
@@ -1741,6 +1741,13 @@ bool BNO08x::enableReport(sh2_SensorId_t sensorId, uint32_t interval_us,
   config.sensorSpecific = sensorSpecific;
 
   config.reportInterval_us = interval_us;
+
+  if(_int_pin != -1) {
+	if (!spihal_wait_for_int()) {
+      return 0;
+  	}
+  }
+  
   int status = sh2_setSensorConfig(sensorId, &config);
 
   if (status != SH2_OK) {
@@ -1755,6 +1762,9 @@ bool BNO08x::enableReport(sh2_SensorId_t sensorId, uint32_t interval_us,
 
 static int i2chal_open(sh2_Hal_t *self) {
   // Serial.println("I2C HAL open");
+
+  if(_int_pin != -1) spihal_wait_for_int();
+  
   uint8_t softreset_pkt[] = {5, 0, 1, 0, 1};
   bool success = false;
   for (uint8_t attempts = 0; attempts < 5; attempts++) {
@@ -1779,6 +1789,12 @@ static int i2chal_read(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len,
   // Serial.println("I2C HAL read");
 
   // uint8_t *pBufferOrig = pBuffer;
+
+  if(_int_pin != -1) {
+	if (!spihal_wait_for_int()) {
+    	return 0;
+  	}
+  }
 
   uint8_t header[4];
   if (!i2c_read(header, 4)) {
@@ -1820,6 +1836,12 @@ static int i2chal_read(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len,
 
     // Serial.print("Reading from I2C: "); Serial.println(read_size);
     // Serial.print("Remaining to read: "); Serial.println(cargo_remaining);
+
+	if(_int_pin != -1) {
+		if (!spihal_wait_for_int()) {
+			return 0;
+		}
+	}
 
     if (!i2c_read(i2c_buffer, read_size)) {
       return 0;
@@ -1867,6 +1889,13 @@ static int i2chal_write(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len) {
   */
 
   uint16_t write_size = min(i2c_buffer_max, len);
+
+  if(_int_pin != -1) {
+	if (!spihal_wait_for_int()) {
+    	return 0;
+  	}
+  }
+
   if (!i2c_write(pBuffer, write_size)) {
     return 0;
   }

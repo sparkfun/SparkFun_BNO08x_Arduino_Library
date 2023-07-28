@@ -165,7 +165,7 @@ const byte CHANNEL_GYRO = 5;
 class BNO08x
 {
 public:
-	boolean begin(uint8_t deviceAddress = BNO08x_DEFAULT_ADDRESS, TwoWire &wirePort = Wire); //By default use the default I2C addres, and use Wire port
+	boolean begin(uint8_t deviceAddress = BNO08x_DEFAULT_ADDRESS, TwoWire &wirePort = Wire, uint8_t user_INTPin = -1, uint8_t user_RSTPin = -1); //By default use the default I2C addres, and use Wire port
 	boolean beginSPI(uint8_t user_CSPin, uint8_t user_INTPin, uint8_t user_RSTPin, uint32_t spiPortSpeed = 1000000, SPIClass &spiPort = SPI);
 	boolean isConnected();
 
@@ -175,8 +175,6 @@ public:
     void hardwareReset(void);
     bool wasReset(void);
 
-	bool requestResetReason(void); // request ProdID from sensor, which includes
-	// reset reason, and then we update it to local struct prodIds->resetCause
 	uint8_t getResetReason(); // returns prodIds->resetCause
 
     bool enableReport(sh2_SensorId_t sensor, uint32_t interval_us = 10000, uint32_t sensorSpecific = 0);
