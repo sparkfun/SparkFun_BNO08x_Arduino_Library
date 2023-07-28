@@ -1,9 +1,11 @@
-SparkFun BNO080 IMU Library
+SparkFun VR IMU BNO08X Arduino Library
 ===========================================================
 
-![SparkFun Inertial Measurement Unit - BNO080](https://cdn.sparkfun.com//assets/parts/1/2/8/9/1/14686-Qwiic_VR_IMU_BN0080-01.jpg)
+[![SparkFun VR IMU Breakout - BNO086 (Qwiic)](URL for picture of part)](https://www.sparkfun.com/products/22857)
 
-[*SparkFun IMU BNO080 (SEN-14686)*](https://www.sparkfun.com/products/14686)
+[*SparkFun VR IMU Breakout - BNO086 (Qwiic)(SEN-22857)*](https://www.sparkfun.com/products/22857)
+
+<!--
 
 The BNO080/BNO085 IMU has a combination triple axis accelerometer/gyro/magnetometer packaged with an ARM Cortex M0+ running powerful algorithms. This enables the BNO080 Inertial Measurement Unit (IMU) to produce accurate rotation vector headings with an error of 5 degrees or less. It's what we've been waiting for: all the sensor data is combined into meaningful, accurate IMU information.
 
@@ -26,6 +28,8 @@ Thanks to all those who have helped improve the library:
 * aedancullen for the tap detector - [PR 64](https://github.com/sparkfun/SparkFun_BNO080_Arduino_Library/pull/64)
 * mattbradford83 for the hasReset code and example - [PR 92](https://github.com/sparkfun/SparkFun_BNO080_Arduino_Library/pull/92)
 
+--> 
+
 Repository Contents
 -------------------
 
@@ -39,19 +43,20 @@ Documentation
 --------------
 
 * **[Installing an Arduino Library Guide](https://learn.sparkfun.com/tutorials/installing-an-arduino-library)** - Basic information on how to install an Arduino library.
-* **[Product Repository](https://github.com/sparkfun/Qwiic_IMU_BNO080)** - Main repository (including hardware files)
+* **[Hookup Guide]()** - Basic hookup guide for the SparkFun VR IMU Breakout - BNO086.
+* **[Product Repository](https://github.com/sparkfun/SparkFun_VR_IMU_Breakout_BNO086_QWIIC)** - Main repository for the BNO086 (including hardware files)
 
 License Information
 -------------------
 
-This product is _**open source**_!
+This product is _**open source**_! 
 
-Please review the [LICENSE.md](./LICENSE.md) file for license information.
+Please review the LICENSE.md file for license information. 
 
-If you have any questions or concerns on licensing, please contact techsupport@sparkfun.com.
-
-Please use, reuse, and modify these files as you see fit. Please maintain attribution to SparkFun Electronics and release any derivative under the same license.
+If you have any questions or concerns on licensing, please contact technical support on our [SparkFun forums](https://forum.sparkfun.com/viewforum.php?f=152).
 
 Distributed as-is; no warranty is given.
 
 - Your friends at SparkFun.
+
+_<COLLABORATION CREDIT>_
