@@ -671,151 +671,62 @@ int16_t BNO08x::getRawMagZ()
 	return _sensor_value->un.rawMagnetometer.z;
 }
 
-//Given a record ID, read the Q1 value from the metaData record in the FRS (ya, it's complicated)
-//Q1 is used for all sensor data calculations
-int16_t BNO08x::getQ1(uint16_t recordID)
-{
-	//Q1 is always the lower 16 bits of word 7
-	uint16_t q = readFRSword(recordID, 7) & 0xFFFF; //Get word 7, lower 16 bits
-	return (q);
-}
+// //Given a record ID, read the Q1 value from the metaData record in the FRS (ya, it's complicated)
+// //Q1 is used for all sensor data calculations
+// int16_t BNO08x::getQ1(uint16_t recordID)
+// {
+// 	//Q1 is always the lower 16 bits of word 7
+// 	//uint16_t q = readFRSword(recordID, 7) & 0xFFFF; //Get word 7, lower 16 bits
+// 	//return (q);
+// }
 
-//Given a record ID, read the Q2 value from the metaData record in the FRS
-//Q2 is used in sensor bias
-int16_t BNO08x::getQ2(uint16_t recordID)
-{
-	//Q2 is always the upper 16 bits of word 7
-	uint16_t q = readFRSword(recordID, 7) >> 16; //Get word 7, upper 16 bits
-	return (q);
-}
+// //Given a record ID, read the Q2 value from the metaData record in the FRS
+// //Q2 is used in sensor bias
+// int16_t BNO08x::getQ2(uint16_t recordID)
+// {
+// 	//Q2 is always the upper 16 bits of word 7
+// 	//uint16_t q = readFRSword(recordID, 7) >> 16; //Get word 7, upper 16 bits
+// 	//return (q);
+// }
 
-//Given a record ID, read the Q3 value from the metaData record in the FRS
-//Q3 is used in sensor change sensitivity
-int16_t BNO08x::getQ3(uint16_t recordID)
-{
-	//Q3 is always the upper 16 bits of word 8
-	uint16_t q = readFRSword(recordID, 8) >> 16; //Get word 8, upper 16 bits
-	return (q);
-}
+// //Given a record ID, read the Q3 value from the metaData record in the FRS
+// //Q3 is used in sensor change sensitivity
+// int16_t BNO08x::getQ3(uint16_t recordID)
+// {
+// 	//Q3 is always the upper 16 bits of word 8
+// 	//uint16_t q = readFRSword(recordID, 8) >> 16; //Get word 8, upper 16 bits
+// 	//return (q);
+// }
 
-//Given a record ID, read the resolution value from the metaData record in the FRS for a given sensor
-float BNO08x::getResolution(uint16_t recordID)
-{
-	//The resolution Q value are 'the same as those used in the sensor's input report'
-	//This should be Q1.
-	int16_t Q = getQ1(recordID);
+// //Given a record ID, read the resolution value from the metaData record in the FRS for a given sensor
+// float BNO08x::getResolution(uint16_t recordID)
+// {
+// 	//The resolution Q value are 'the same as those used in the sensor's input report'
+// 	//This should be Q1.
+// 	int16_t Q = getQ1(recordID);
 
-	//Resolution is always word 2
-	uint32_t value = readFRSword(recordID, 2); //Get word 2
+// 	//Resolution is always word 2
+// 	//uint32_t value = readFRSword(recordID, 2); //Get word 2
 
-	float resolution = qToFloat(value, Q);
+// 	float resolution = qToFloat(value, Q);
 
-	return (resolution);
-}
+// 	return (resolution);
+// }
 
-//Given a record ID, read the range value from the metaData record in the FRS for a given sensor
-float BNO08x::getRange(uint16_t recordID)
-{
-	//The resolution Q value are 'the same as those used in the sensor's input report'
-	//This should be Q1.
-	int16_t Q = getQ1(recordID);
+// //Given a record ID, read the range value from the metaData record in the FRS for a given sensor
+// float BNO08x::getRange(uint16_t recordID)
+// {
+// 	//The resolution Q value are 'the same as those used in the sensor's input report'
+// 	//This should be Q1.
+// 	int16_t Q = getQ1(recordID);
 
-	//Range is always word 1
-	uint32_t value = readFRSword(recordID, 1); //Get word 1
+// 	//Range is always word 1
+// 	//uint32_t value = readFRSword(recordID, 1); //Get word 1
 
-	float range = qToFloat(value, Q);
+// 	float range = qToFloat(value, Q);
 
-	return (range);
-}
-
-//Given a record ID and a word number, look up the word data
-//Helpful for pulling out a Q value, range, etc.
-//Use readFRSdata for pulling out multi-word objects for a sensor (Vendor data for example)
-uint32_t BNO08x::readFRSword(uint16_t recordID, uint8_t wordNumber)
-{
-	if (readFRSdata(recordID, wordNumber, 1) == true) //Get word number, just one word in length from FRS
-		return (metaData[0]);						  //Return this one word
-
-	return (0); //Error
-}
-
-//Ask the sensor for data from the Flash Record System
-//See 6.3.6 page 40, FRS Read Request
-void BNO08x::frsReadRequest(uint16_t recordID, uint16_t readOffset, uint16_t blockSize)
-{
-	shtpData[0] = SHTP_REPORT_FRS_READ_REQUEST; //FRS Read Request
-	shtpData[1] = 0;							//Reserved
-	shtpData[2] = (readOffset >> 0) & 0xFF;		//Read Offset LSB
-	shtpData[3] = (readOffset >> 8) & 0xFF;		//Read Offset MSB
-	shtpData[4] = (recordID >> 0) & 0xFF;		//FRS Type LSB
-	shtpData[5] = (recordID >> 8) & 0xFF;		//FRS Type MSB
-	shtpData[6] = (blockSize >> 0) & 0xFF;		//Block size LSB
-	shtpData[7] = (blockSize >> 8) & 0xFF;		//Block size MSB
-
-	//Transmit packet on channel 2, 8 bytes
-	sendPacket(CHANNEL_CONTROL, 8);
-}
-
-//Given a sensor or record ID, and a given start/stop bytes, read the data from the Flash Record System (FRS) for this sensor
-//Returns true if metaData array is loaded successfully
-//Returns false if failure
-bool BNO08x::readFRSdata(uint16_t recordID, uint8_t startLocation, uint8_t wordsToRead)
-{
-	uint8_t spot = 0;
-
-	//First we send a Flash Record System (FRS) request
-	frsReadRequest(recordID, startLocation, wordsToRead); //From startLocation of record, read a # of words
-
-	//Read bytes until FRS reports that the read is complete
-	while (1)
-	{
-		//Now we wait for response
-		while (1)
-		{
-			uint8_t counter = 0;
-			while (receivePacket() == false)
-			{
-				if (counter++ > 100)
-					return (false); //Give up
-				delay(1);
-			}
-
-			//We have the packet, inspect it for the right contents
-			//See page 40. Report ID should be 0xF3 and the FRS types should match the thing we requested
-			if (shtpData[0] == SHTP_REPORT_FRS_READ_RESPONSE)
-				if (((((uint16_t)shtpData[13]) << 8) | shtpData[12]) == recordID)
-					break; //This packet is one we are looking for
-		}
-
-		uint8_t dataLength = shtpData[1] >> 4;
-		uint8_t frsStatus = shtpData[1] & 0x0F;
-
-		uint32_t data0 = (uint32_t)shtpData[7] << 24 | (uint32_t)shtpData[6] << 16 | (uint32_t)shtpData[5] << 8 | (uint32_t)shtpData[4];
-		uint32_t data1 = (uint32_t)shtpData[11] << 24 | (uint32_t)shtpData[10] << 16 | (uint32_t)shtpData[9] << 8 | (uint32_t)shtpData[8];
-
-		//Record these words to the metaData array
-		if (dataLength > 0)
-		{
-			metaData[spot++] = data0;
-		}
-		if (dataLength > 1)
-		{
-			metaData[spot++] = data1;
-		}
-
-		if (spot >= MAX_METADATA_SIZE)
-		{
-			if (_printDebug == true)
-				_debugPort->println(F("metaData array over run. Returning."));
-			return (true); //We have run out of space in our array. Bail.
-		}
-
-		if (frsStatus == 3 || frsStatus == 6 || frsStatus == 7)
-		{
-			return (true); //FRS status is read completed! We're done!
-		}
-	}
-}
+// 	return (range);
+// }
 
 bool BNO08x::serviceBus(void)
 {
@@ -824,36 +735,15 @@ bool BNO08x::serviceBus(void)
 }
 
 //Send command to reset IC
-//Read all advertisement packets from sensor
-//The sensor has been seen to reset twice if we attempt too much too quickly.
-//This seems to work reliably.
 bool BNO08x::softReset(void)
 {
-	shtpData[0] = 1; //Reset
+  int status = sh2_devReset();
 
-  bool success = false;
-  for (uint8_t attempts = 0; attempts < 5; attempts++) {
-    if (sendPacket(CHANNEL_EXECUTABLE, 1)) {
-      success = true;
-      break;
-    }
-    delay(30);
+  if (status != SH2_OK) {
+    return false;
   }
-  if (!success)
-    return 0;
-  delay(300);
-  return 1;
 
-	// //Attempt to start communication with sensor
-	// sendPacket(CHANNEL_EXECUTABLE, 1); //Transmit packet on channel 1, 1 byte
-
-	// //Read all incoming data and flush it
-	// delay(50);
-	// while (receivePacket() == true)
-	// 	; //delay(1);
-	// delay(50);
-	// while (receivePacket() == true)
-	// 	; //delay(1);
+  return true;	
 }
 
 //Set the operating mode to "On"
@@ -880,38 +770,6 @@ bool BNO08x::modeSleep(void)
   }
 
   return true;	
-}
-
-// Indicates if we've received a Reset Complete packet. Once it's been read, 
-// the state will reset to false until another Reset Complete packet is found. 
-bool BNO08x::hasReset() {
-	if (_hasReset) {
-		_hasReset = false;
-		return true;
-	}
-	return false; 
-}
-
-//Get the reason for the last reset
-//1 = POR, 2 = Internal reset, 3 = Watchdog, 4 = External reset, 5 = Other
-uint8_t BNO08x::resetReason()
-{
-	shtpData[0] = SHTP_REPORT_PRODUCT_ID_REQUEST; //Request the product ID and reset info
-	shtpData[1] = 0;							  //Reserved
-
-	//Transmit packet on channel 2, 2 bytes
-	sendPacket(CHANNEL_CONTROL, 2);
-
-	//Now we wait for response
-	if (receivePacket() == true)
-	{
-		if (shtpData[0] == SHTP_REPORT_PRODUCT_ID_RESPONSE)
-		{
-			return (shtpData[1]);
-		}
-	}
-
-	return (0);
 }
 
 //Get the reason for the last reset
@@ -1060,49 +918,49 @@ bool BNO08x::enableActivityClassifier(uint16_t timeBetweenReports, uint32_t acti
 	return enableReport(SENSOR_REPORTID_PERSONAL_ACTIVITY_CLASSIFIER, timeBetweenReports, activitiesToEnable);
 }
 
-//Sends the commands to begin calibration of the accelerometer
-void BNO08x::calibrateAccelerometer()
-{
-	sendCalibrateCommand(CALIBRATE_ACCEL);
-}
+// //Sends the commands to begin calibration of the accelerometer
+// void BNO08x::calibrateAccelerometer()
+// {
+// 	sendCalibrateCommand(CALIBRATE_ACCEL);
+// }
 
-//Sends the commands to begin calibration of the gyro
-void BNO08x::calibrateGyro()
-{
-	sendCalibrateCommand(CALIBRATE_GYRO);
-}
+// //Sends the commands to begin calibration of the gyro
+// void BNO08x::calibrateGyro()
+// {
+// 	sendCalibrateCommand(CALIBRATE_GYRO);
+// }
 
-//Sends the commands to begin calibration of the magnetometer
-void BNO08x::calibrateMagnetometer()
-{
-	sendCalibrateCommand(CALIBRATE_MAG);
-}
+// //Sends the commands to begin calibration of the magnetometer
+// void BNO08x::calibrateMagnetometer()
+// {
+// 	sendCalibrateCommand(CALIBRATE_MAG);
+// }
 
-//Sends the commands to begin calibration of the planar accelerometer
-void BNO08x::calibratePlanarAccelerometer()
-{
-	sendCalibrateCommand(CALIBRATE_PLANAR_ACCEL);
-}
+// //Sends the commands to begin calibration of the planar accelerometer
+// void BNO08x::calibratePlanarAccelerometer()
+// {
+// 	sendCalibrateCommand(CALIBRATE_PLANAR_ACCEL);
+// }
 
-//See 2.2 of the Calibration Procedure document 1000-4044
-void BNO08x::calibrateAll()
-{
-	sendCalibrateCommand(CALIBRATE_ACCEL_GYRO_MAG);
-}
+// //See 2.2 of the Calibration Procedure document 1000-4044
+// void BNO08x::calibrateAll()
+// {
+// 	sendCalibrateCommand(CALIBRATE_ACCEL_GYRO_MAG);
+// }
 
-void BNO08x::endCalibration()
-{
-	sendCalibrateCommand(CALIBRATE_STOP); //Disables all calibrations
-}
+// void BNO08x::endCalibration()
+// {
+// 	sendCalibrateCommand(CALIBRATE_STOP); //Disables all calibrations
+// }
 
-//See page 51 of reference manual - ME Calibration Response
-//Byte 5 is parsed during the readPacket and stored in calibrationStatus
-boolean BNO08x::calibrationComplete()
-{
-	if (calibrationStatus == 0)
-		return (true);
-	return (false);
-}
+// //See page 51 of reference manual - ME Calibration Response
+// //Byte 5 is parsed during the readPacket and stored in calibrationStatus
+// boolean BNO08x::calibrationComplete()
+// {
+// 	if (calibrationStatus == 0)
+// 		return (true);
+// 	return (false);
+// }
 
 bool BNO08x::tareNow(bool zAxis, sh2_TareBasis_t basis)
 {
@@ -1137,523 +995,92 @@ bool BNO08x::clearTare()
   return true;
 }
 
-//Given a sensor's report ID, this tells the BNO08x to begin reporting the values
-void BNO08x::setFeatureCommand(uint8_t reportID, uint16_t timeBetweenReports)
-{
-	setFeatureCommand(reportID, timeBetweenReports, 0); //No specific config
-}
-
-//Given a sensor's report ID, this tells the BNO08x to begin reporting the values
-//Also sets the specific config word. Useful for personal activity classifier
-void BNO08x::setFeatureCommand(uint8_t reportID, uint16_t timeBetweenReports, uint32_t specificConfig)
-{
-	long microsBetweenReports = (long)timeBetweenReports * 1000L;
-
-	shtpData[0] = SHTP_REPORT_SET_FEATURE_COMMAND;	 //Set feature command. Reference page 55
-	shtpData[1] = reportID;							   //Feature Report ID. 0x01 = Accelerometer, 0x05 = Rotation vector
-	shtpData[2] = 0;								   //Feature flags
-	shtpData[3] = 0;								   //Change sensitivity (LSB)
-	shtpData[4] = 0;								   //Change sensitivity (MSB)
-	shtpData[5] = (microsBetweenReports >> 0) & 0xFF;  //Report interval (LSB) in microseconds. 0x7A120 = 500ms
-	shtpData[6] = (microsBetweenReports >> 8) & 0xFF;  //Report interval
-	shtpData[7] = (microsBetweenReports >> 16) & 0xFF; //Report interval
-	shtpData[8] = (microsBetweenReports >> 24) & 0xFF; //Report interval (MSB)
-	shtpData[9] = 0;								   //Batch Interval (LSB)
-	shtpData[10] = 0;								   //Batch Interval
-	shtpData[11] = 0;								   //Batch Interval
-	shtpData[12] = 0;								   //Batch Interval (MSB)
-	shtpData[13] = (specificConfig >> 0) & 0xFF;	   //Sensor-specific config (LSB)
-	shtpData[14] = (specificConfig >> 8) & 0xFF;	   //Sensor-specific config
-	shtpData[15] = (specificConfig >> 16) & 0xFF;	  //Sensor-specific config
-	shtpData[16] = (specificConfig >> 24) & 0xFF;	  //Sensor-specific config (MSB)
-
-	//Transmit packet on channel 2, 17 bytes
-	sendPacket(CHANNEL_CONTROL, 17);
-}
-
-//Tell the sensor to do a command
-//See 6.3.8 page 41, Command request
-//The caller is expected to set P0 through P8 prior to calling
-void BNO08x::sendCommand(uint8_t command)
-{
-	shtpData[0] = SHTP_REPORT_COMMAND_REQUEST; //Command Request
-	shtpData[1] = commandSequenceNumber++;	 //Increments automatically each function call
-	shtpData[2] = command;					   //Command
-
-	//Caller must set these
-	/*shtpData[3] = 0; //P0
-	shtpData[4] = 0; //P1
-	shtpData[5] = 0; //P2
-	shtpData[6] = 0;
-	shtpData[7] = 0;
-	shtpData[8] = 0;
-	shtpData[9] = 0;
-	shtpData[10] = 0;
-	shtpData[11] = 0;*/
-
-	//Transmit packet on channel 2, 12 bytes
-	sendPacket(CHANNEL_CONTROL, 12);
-}
-
-//This tells the BNO08x to begin calibrating
-//See page 50 of reference manual and the 1000-4044 calibration doc
-void BNO08x::sendCalibrateCommand(uint8_t thingToCalibrate)
-{
-	/*shtpData[3] = 0; //P0 - Accel Cal Enable
-	shtpData[4] = 0; //P1 - Gyro Cal Enable
-	shtpData[5] = 0; //P2 - Mag Cal Enable
-	shtpData[6] = 0; //P3 - Subcommand 0x00
-	shtpData[7] = 0; //P4 - Planar Accel Cal Enable
-	shtpData[8] = 0; //P5 - Reserved
-	shtpData[9] = 0; //P6 - Reserved
-	shtpData[10] = 0; //P7 - Reserved
-	shtpData[11] = 0; //P8 - Reserved*/
-
-	for (uint8_t x = 3; x < 12; x++) //Clear this section of the shtpData array
-		shtpData[x] = 0;
-
-	if (thingToCalibrate == CALIBRATE_ACCEL)
-		shtpData[3] = 1;
-	else if (thingToCalibrate == CALIBRATE_GYRO)
-		shtpData[4] = 1;
-	else if (thingToCalibrate == CALIBRATE_MAG)
-		shtpData[5] = 1;
-	else if (thingToCalibrate == CALIBRATE_PLANAR_ACCEL)
-		shtpData[7] = 1;
-	else if (thingToCalibrate == CALIBRATE_ACCEL_GYRO_MAG)
-	{
-		shtpData[3] = 1;
-		shtpData[4] = 1;
-		shtpData[5] = 1;
-	}
-	else if (thingToCalibrate == CALIBRATE_STOP)
-	{
-		; //Do nothing, bytes are set to zero
-	}
-
-	//Make the internal calStatus variable non-zero (operation failed) so that user can test while we wait
-	calibrationStatus = 1;
-
-	//Using this shtpData packet, send a command
-	sendCommand(COMMAND_ME_CALIBRATE);
-}
-
-void BNO08x::sendTareCommand(uint8_t command, uint8_t axis, uint8_t rotationVectorBasis)
-{
-	for (uint8_t x = 3; x < 12; x++) //Clear this section of the shtpData array
-		shtpData[x] = 0;
-
-	shtpData[3] = command;
-	
-	if (command == TARE_NOW)
-	{
-		shtpData[4] = axis; // axis setting
-		shtpData[5] = rotationVectorBasis; // rotation vector
-	}
-	
-	//Using this shtpData packet, send a command
-	sendCommand(COMMAND_TARE);
-}
-
-//Request ME Calibration Status from BNO08x
-//See page 51 of reference manual
-void BNO08x::requestCalibrationStatus()
-{
-	/*shtpData[3] = 0; //P0 - Reserved
-	shtpData[4] = 0; //P1 - Reserved
-	shtpData[5] = 0; //P2 - Reserved
-	shtpData[6] = 0; //P3 - 0x01 - Subcommand: Get ME Calibration
-	shtpData[7] = 0; //P4 - Reserved
-	shtpData[8] = 0; //P5 - Reserved
-	shtpData[9] = 0; //P6 - Reserved
-	shtpData[10] = 0; //P7 - Reserved
-	shtpData[11] = 0; //P8 - Reserved*/
-
-	for (uint8_t x = 3; x < 12; x++) //Clear this section of the shtpData array
-		shtpData[x] = 0;
-
-	shtpData[6] = 0x01; //P3 - 0x01 - Subcommand: Get ME Calibration
-
-	//Using this shtpData packet, send a command
-	sendCommand(COMMAND_ME_CALIBRATE);
-}
-
-//This tells the BNO08x to save the Dynamic Calibration Data (DCD) to flash
-//See page 49 of reference manual and the 1000-4044 calibration doc
-void BNO08x::saveCalibration()
-{
-	/*shtpData[3] = 0; //P0 - Reserved
-	shtpData[4] = 0; //P1 - Reserved
-	shtpData[5] = 0; //P2 - Reserved
-	shtpData[6] = 0; //P3 - Reserved
-	shtpData[7] = 0; //P4 - Reserved
-	shtpData[8] = 0; //P5 - Reserved
-	shtpData[9] = 0; //P6 - Reserved
-	shtpData[10] = 0; //P7 - Reserved
-	shtpData[11] = 0; //P8 - Reserved*/
-
-	for (uint8_t x = 3; x < 12; x++) //Clear this section of the shtpData array
-		shtpData[x] = 0;
-
-	//Using this shtpData packet, send a command
-	sendCommand(COMMAND_DCD); //Save DCD command
-}
-
-//Wait a certain time for incoming I2C bytes before giving up
-//Returns false if failed
-boolean BNO08x::waitForI2C()
-{
-	for (uint16_t counter = 0; counter < 1000; counter++) //Don't got more than 255
-	{
-		int i2c_available_amount = _i2cPort->available();
-		if (i2c_available_amount > 0)
-		{
-			if (_printDebug == true)
-			{
-		        _debugPort->print(F("I2C available"));
-				_debugPort->println(i2c_available_amount);
-	        }
-			return (true);
-		}
-		delayMicroseconds(1000);
-		if (_printDebug == true)
-		    _debugPort->print(F("."));
-	}
-
-	if (_printDebug == true)
-		_debugPort->println(F("I2C timeout"));
-	return (false);
-}
-
-//Blocking wait for BNO08x to assert (pull low) the INT pin
-//indicating it's ready for comm. Can take more than 104ms
-//after a hardware reset
-boolean BNO08x::waitForSPI()
-{
-	for (uint8_t counter = 0; counter < 125; counter++) //Don't got more than 255
-	{
-		if (digitalRead(_int_pin) == LOW)
-			return (true);
-		if (_printDebug == true)
-			_debugPort->println(F("SPI Wait"));
-		delay(1);
-	}
-
-	if (_printDebug == true)
-		_debugPort->println(F("SPI INT timeout"));
-	return (false);
-}
-
-// //Check to see if there is any new data available
-// //Read the contents of the incoming packet into the shtpData array
-// boolean BNO08x::receivePacket(void)
+// //This tells the BNO08x to begin calibrating
+// //See page 50 of reference manual and the 1000-4044 calibration doc
+// void BNO08x::sendCalibrateCommand(uint8_t thingToCalibrate)
 // {
-// 	if (_i2cPort == NULL) //Do SPI
+// 	/*shtpData[3] = 0; //P0 - Accel Cal Enable
+// 	shtpData[4] = 0; //P1 - Gyro Cal Enable
+// 	shtpData[5] = 0; //P2 - Mag Cal Enable
+// 	shtpData[6] = 0; //P3 - Subcommand 0x00
+// 	shtpData[7] = 0; //P4 - Planar Accel Cal Enable
+// 	shtpData[8] = 0; //P5 - Reserved
+// 	shtpData[9] = 0; //P6 - Reserved
+// 	shtpData[10] = 0; //P7 - Reserved
+// 	shtpData[11] = 0; //P8 - Reserved*/
+
+// 	for (uint8_t x = 3; x < 12; x++) //Clear this section of the shtpData array
+// 		shtpData[x] = 0;
+
+// 	if (thingToCalibrate == CALIBRATE_ACCEL)
+// 		shtpData[3] = 1;
+// 	else if (thingToCalibrate == CALIBRATE_GYRO)
+// 		shtpData[4] = 1;
+// 	else if (thingToCalibrate == CALIBRATE_MAG)
+// 		shtpData[5] = 1;
+// 	else if (thingToCalibrate == CALIBRATE_PLANAR_ACCEL)
+// 		shtpData[7] = 1;
+// 	else if (thingToCalibrate == CALIBRATE_ACCEL_GYRO_MAG)
 // 	{
-// 		if (digitalRead(_int_pin) == HIGH)
-// 			return (false); //Data is not available
-
-// 		//Old way: if (waitForSPI() == false) return (false); //Something went wrong
-
-// 		//Get first four bytes to find out how much data we need to read
-
-// 		_spiPort->beginTransaction(SPISettings(_spiPortSpeed, MSBFIRST, SPI_MODE3));
-// 		digitalWrite(_cs, LOW);
-
-// 		//Get the first four bytes, aka the packet header
-// 		uint8_t packetLSB = _spiPort->transfer(0);
-// 		uint8_t packetMSB = _spiPort->transfer(0);
-// 		uint8_t channelNumber = _spiPort->transfer(0);
-// 		uint8_t sequenceNumber = _spiPort->transfer(0); //Not sure if we need to store this or not
-
-// 		//Store the header info
-// 		shtpHeader[0] = packetLSB;
-// 		shtpHeader[1] = packetMSB;
-// 		shtpHeader[2] = channelNumber;
-// 		shtpHeader[3] = sequenceNumber;
-
-// 		//Calculate the number of data bytes in this packet
-// 		uint16_t dataLength = (((uint16_t)packetMSB) << 8) | ((uint16_t)packetLSB);
-// 		dataLength &= ~(1 << 15); //Clear the MSbit.
-// 		//This bit indicates if this package is a continuation of the last. Ignore it for now.
-// 		//TODO catch this as an error and exit
-// 		if (dataLength == 0)
-// 		{
-// 			//Packet is empty
-// 			printHeader();
-// 			return (false); //All done
-// 		}
-// 		dataLength -= 4; //Remove the header bytes from the data count
-
-// 		//Read incoming data into the shtpData array
-// 		for (uint16_t dataSpot = 0; dataSpot < dataLength; dataSpot++)
-// 		{
-// 			uint8_t incoming = _spiPort->transfer(0xFF);
-// 			if (dataSpot < MAX_PACKET_SIZE)	//BNO08x can respond with upto 270 bytes, avoid overflow
-// 				shtpData[dataSpot] = incoming; //Store data into the shtpData array
-// 		}
-
-// 		digitalWrite(_cs, HIGH); //Release BNO08x
-
-// 		_spiPort->endTransaction();
-// 		printPacket();
+// 		shtpData[3] = 1;
+// 		shtpData[4] = 1;
+// 		shtpData[5] = 1;
 // 	}
-// 	else //Do I2C
+// 	else if (thingToCalibrate == CALIBRATE_STOP)
 // 	{
-// 		int requestFromReturn;
-// 		requestFromReturn = _i2cPort->requestFrom((uint8_t)_deviceAddress, (size_t)4); //Ask for four bytes to find out how much data we need to read
-// 		Serial.print("requestFromReturn:");
-// 		Serial.println(requestFromReturn);
-
-// 		if (waitForI2C() == false)
-// 			return (false); //Error
-
-// 		//Get the first four bytes, aka the packet header
-// 		uint8_t packetLSB = _i2cPort->read();
-// 		uint8_t packetMSB = _i2cPort->read();
-// 		uint8_t channelNumber = _i2cPort->read();
-// 		uint8_t sequenceNumber = _i2cPort->read(); //Not sure if we need to store this or not
-
-// 		//Store the header info.
-// 		shtpHeader[0] = packetLSB;
-// 		shtpHeader[1] = packetMSB;
-// 		shtpHeader[2] = channelNumber;
-// 		shtpHeader[3] = sequenceNumber;
-
-// 		//Calculate the number of data bytes in this packet
-// 		uint16_t dataLength = (((uint16_t)packetMSB) << 8) | ((uint16_t)packetLSB);
-// 		dataLength &= ~(1 << 15); //Clear the MSbit.
-// 		//This bit indicates if this package is a continuation of the last. Ignore it for now.
-// 		//TODO catch this as an error and exit
-
-// 		if (_printDebug == true)
-// 		{
-// 			_debugPort->print(F("receivePacket (I2C): dataLength is: "));
-// 			_debugPort->println(dataLength);
-// 			_debugPort->print(F("HEADER IS: "));
-// 			_debugPort->print(shtpHeader[0]);
-// 			_debugPort->print(F("\t"));
-// 			_debugPort->print(shtpHeader[1]);
-// 			_debugPort->print(F("\t"));
-// 			_debugPort->print(shtpHeader[2]);
-// 			_debugPort->print(F("\t"));
-// 			_debugPort->print(shtpHeader[3]);
-// 			_debugPort->println(F("\t"));
-// 		}
-
-// 		if (dataLength == 0)
-// 		{
-// 			//Packet is empty
-// 			return (false); //All done
-// 		}
-// 		dataLength -= 4; //Remove the header bytes from the data count
-
-// 		getData(dataLength);
+// 		; //Do nothing, bytes are set to zero
 // 	}
 
-// 	// Quickly check for reset complete packet. No need for a seperate parser.
-// 	// This function is also called after soft reset, so we need to catch this
-// 	// packet here otherwise we need to check for the reset packet in multiple
-// 	// places.
-// 	if (shtpHeader[2] == CHANNEL_EXECUTABLE && shtpData[0] == EXECUTABLE_RESET_COMPLETE) 
-// 	{
-// 		_hasReset = true;
-// 	} 
+// 	//Make the internal calStatus variable non-zero (operation failed) so that user can test while we wait
+// 	calibrationStatus = 1;
 
-// 	return (true); //We're done!
+// 	//Using this shtpData packet, send a command
+// 	sendCommand(COMMAND_ME_CALIBRATE);
 // }
 
-//Sends multiple requests to sensor until all data bytes are received from sensor
-//The shtpData buffer has max capacity of MAX_PACKET_SIZE. Any bytes over this amount will be lost.
-//Arduino I2C read limit is 32 bytes. Header is 4 bytes, so max data we can read per interation is 28 bytes
-boolean BNO08x::getData(uint16_t bytesRemaining)
-{
-	Serial.println("getData BEGINNING");
-	uint16_t dataSpot = 0; //Start at the beginning of shtpData array
+// //Request ME Calibration Status from BNO08x
+// //See page 51 of reference manual
+// void BNO08x::requestCalibrationStatus()
+// {
+// 	/*shtpData[3] = 0; //P0 - Reserved
+// 	shtpData[4] = 0; //P1 - Reserved
+// 	shtpData[5] = 0; //P2 - Reserved
+// 	shtpData[6] = 0; //P3 - 0x01 - Subcommand: Get ME Calibration
+// 	shtpData[7] = 0; //P4 - Reserved
+// 	shtpData[8] = 0; //P5 - Reserved
+// 	shtpData[9] = 0; //P6 - Reserved
+// 	shtpData[10] = 0; //P7 - Reserved
+// 	shtpData[11] = 0; //P8 - Reserved*/
 
-	//Setup a series of chunked 32 byte reads
-	while (bytesRemaining > 0)
-	{
-		uint16_t numberOfBytesToRead = bytesRemaining;
-		if (numberOfBytesToRead > (I2C_BUFFER_LENGTH - 4))
-			numberOfBytesToRead = (I2C_BUFFER_LENGTH - 4);
-		
-		Serial.print("numberOfBytesToRead");
-		Serial.println(numberOfBytesToRead);
+// 	for (uint8_t x = 3; x < 12; x++) //Clear this section of the shtpData array
+// 		shtpData[x] = 0;
 
-		_i2cPort->requestFrom((uint8_t)_deviceAddress, (size_t)(numberOfBytesToRead + 4));
-		if (waitForI2C() == false)
-			return (0); //Error
+// 	shtpData[6] = 0x01; //P3 - 0x01 - Subcommand: Get ME Calibration
 
-		//The first four bytes are header bytes and are throw away
-		_i2cPort->read();
-		_i2cPort->read();
-		_i2cPort->read();
-		_i2cPort->read();
+// 	//Using this shtpData packet, send a command
+// 	sendCommand(COMMAND_ME_CALIBRATE);
+// }
 
-		for (uint8_t x = 0; x < numberOfBytesToRead; x++)
-		{
-			uint8_t incoming = _i2cPort->read();
-			if (dataSpot < MAX_PACKET_SIZE)
-			{
-				shtpData[dataSpot++] = incoming; //Store data into the shtpData array
-			}
-			else
-			{
-				//Do nothing with the data
-			}
-		}
+// //This tells the BNO08x to save the Dynamic Calibration Data (DCD) to flash
+// //See page 49 of reference manual and the 1000-4044 calibration doc
+// void BNO08x::saveCalibration()
+// {
+// 	/*shtpData[3] = 0; //P0 - Reserved
+// 	shtpData[4] = 0; //P1 - Reserved
+// 	shtpData[5] = 0; //P2 - Reserved
+// 	shtpData[6] = 0; //P3 - Reserved
+// 	shtpData[7] = 0; //P4 - Reserved
+// 	shtpData[8] = 0; //P5 - Reserved
+// 	shtpData[9] = 0; //P6 - Reserved
+// 	shtpData[10] = 0; //P7 - Reserved
+// 	shtpData[11] = 0; //P8 - Reserved*/
 
-		bytesRemaining -= numberOfBytesToRead;
-	}
-	printPacket();
-	return (true); //Done!
-}
+// 	for (uint8_t x = 3; x < 12; x++) //Clear this section of the shtpData array
+// 		shtpData[x] = 0;
 
-//Given the data packet, send the header then the data
-//Returns false if sensor does not ACK
-//TODO - Arduino has a max 32 byte send. Break sending into multi packets if needed.
-boolean BNO08x::sendPacket(uint8_t channelNumber, uint8_t dataLength)
-{
-	uint8_t packetLength = dataLength + 4; //Add four bytes for the header
-
-	if (_i2cPort == NULL) //Do SPI
-	{
-		//Wait for BNO08x to indicate it is available for communication
-		if (waitForSPI() == false)
-			return (false); //Something went wrong
-
-		//BNO08x has max CLK of 3MHz, MSB first,
-		//The BNO08x uses CPOL = 1 and CPHA = 1. This is mode3
-		_spiPort->beginTransaction(SPISettings(_spiPortSpeed, MSBFIRST, SPI_MODE3));
-		digitalWrite(_cs, LOW);
-
-		//Send the 4 byte packet header
-		_spiPort->transfer(packetLength & 0xFF);			 //Packet length LSB
-		_spiPort->transfer(packetLength >> 8);				 //Packet length MSB
-		_spiPort->transfer(channelNumber);					 //Channel number
-		_spiPort->transfer(sequenceNumber[channelNumber]++); //Send the sequence number, increments with each packet sent, different counter for each channel
-
-		//Send the user's data packet
-		for (uint8_t i = 0; i < dataLength; i++)
-		{
-			_spiPort->transfer(shtpData[i]);
-		}
-
-		digitalWrite(_cs, HIGH);
-		_spiPort->endTransaction();
-	}
-	else //Do I2C
-	{
-		//if(packetLength > I2C_BUFFER_LENGTH) return(false); //You are trying to send too much. Break into smaller packets.
-
-		_i2cPort->beginTransmission(_deviceAddress);
-
-		//Send the 4 byte packet header
-		_i2cPort->write(packetLength & 0xFF);			  //Packet length LSB
-		_i2cPort->write(packetLength >> 8);				  //Packet length MSB
-		_i2cPort->write(channelNumber);					  //Channel number
-		_i2cPort->write(sequenceNumber[channelNumber]++); //Send the sequence number, increments with each packet sent, different counter for each channel
-
-		//Send the user's data packet
-		for (uint8_t i = 0; i < dataLength; i++)
-		{
-			_i2cPort->write(shtpData[i]);
-		}
-
-		uint8_t i2cResult = _i2cPort->endTransmission();
-
-		if (i2cResult != 0)
-		{
-			if (_printDebug == true)
-			{
-				_debugPort->print(F("sendPacket(I2C): endTransmission returned: "));
-				_debugPort->println(i2cResult);
-			}
-			return (false);
-		}
-	}
-
-	return (true);
-}
-
-//Pretty prints the contents of the current shtp header and data packets
-void BNO08x::printPacket(void)
-{
-	if (_printDebug == true)
-	{
-		uint16_t packetLength = (uint16_t)shtpHeader[1] << 8 | shtpHeader[0];
-
-		//Print the four byte header
-		_debugPort->print(F("Header:"));
-		for (uint8_t x = 0; x < 4; x++)
-		{
-			_debugPort->print(F(" "));
-			if (shtpHeader[x] < 0x10)
-				_debugPort->print(F("0"));
-			_debugPort->print(shtpHeader[x], HEX);
-		}
-
-		uint8_t printLength = packetLength - 4;
-		if (printLength > 40)
-			printLength = 40; //Artificial limit. We don't want the phone book.
-
-		_debugPort->print(F(" Body:"));
-		for (uint8_t x = 0; x < printLength; x++)
-		{
-			_debugPort->print(F(" "));
-			if (shtpData[x] < 0x10)
-				_debugPort->print(F("0"));
-			_debugPort->print(shtpData[x], HEX);
-		}
-
-		if (packetLength & 1 << 15)
-		{
-			_debugPort->println(F(" [Continued packet] "));
-			packetLength &= ~(1 << 15);
-		}
-
-		_debugPort->print(F(" Length:"));
-		_debugPort->print(packetLength);
-
-		_debugPort->print(F(" Channel:"));
-		if (shtpHeader[2] == 0)
-			_debugPort->print(F("Command"));
-		else if (shtpHeader[2] == 1)
-			_debugPort->print(F("Executable"));
-		else if (shtpHeader[2] == 2)
-			_debugPort->print(F("Control"));
-		else if (shtpHeader[2] == 3)
-			_debugPort->print(F("Sensor-report"));
-		else if (shtpHeader[2] == 4)
-			_debugPort->print(F("Wake-report"));
-		else if (shtpHeader[2] == 5)
-			_debugPort->print(F("Gyro-vector"));
-		else
-			_debugPort->print(shtpHeader[2]);
-
-		_debugPort->println();
-	}
-}
-
-//Pretty prints the contents of the current shtp header (only)
-void BNO08x::printHeader(void)
-{
-	if (_printDebug == true)
-	{
-		//Print the four byte header
-		_debugPort->print(F("Header:"));
-		for (uint8_t x = 0; x < 4; x++)
-		{
-			_debugPort->print(F(" "));
-			if (shtpHeader[x] < 0x10)
-				_debugPort->print(F("0"));
-			_debugPort->print(shtpHeader[x], HEX);
-		}
-		_debugPort->println();
-	}
-}
-
+// 	//Using this shtpData packet, send a command
+// 	sendCommand(COMMAND_DCD); //Save DCD command
+// }
 
 /*!  @brief Initializer for post i2c/spi init
  *   @param sensor_id Optional unique ID for the sensor set
@@ -1757,8 +1184,10 @@ bool BNO08x::enableReport(sh2_SensorId_t sensorId, uint32_t interval_us,
   return true;
 }
 
-/**************************************** I2C interface
- * ***********************************************************/
+/****************************************
+***************************************** I2C interface
+*****************************************
+*****************************************/
 
 static int i2chal_open(sh2_Hal_t *self) {
   // Serial.println("I2C HAL open");
@@ -1903,9 +1332,10 @@ static int i2chal_write(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len) {
   return write_size;
 }
 
-
-/**************************************** HAL interface
- * ***********************************************************/
+/****************************************
+***************************************** HAL interface
+*****************************************
+*****************************************/
 
 static void hal_hardwareReset(void) {
   if (_reset_pin != -1) {
@@ -1972,19 +1402,10 @@ boolean BNO08x::isConnected()
   	return (true);
 }
 
-
-
-
-
-
-
-
-
-
-
-  /**************************************** I2C Write/Read Functions
- * ***********************************************************/
-
+/****************************************
+***************************************** I2C Write/Read Functions
+*****************************************
+*****************************************/
 
 /*!
  *    @brief  Write a buffer or two to the I2C device. Cannot be more than
@@ -2073,18 +1494,13 @@ boolean _i2c_read(uint8_t *buffer, size_t len, bool stop) {
 
   /*!   @brief  How many bytes we can read in a transaction
    *    @return The size of the Wire receive/transmit buffer */
-  size_t maxBufferSize() { return _maxBufferSize; }
+size_t maxBufferSize() { return _maxBufferSize; }
 
 
-
-
-
-
-
-
-
-  /**************************************** SPI interface
- * ***********************************************************/
+/****************************************
+***************************************** HAL SPI interface
+*****************************************
+*****************************************/
 
 static int spihal_open(sh2_Hal_t *self) {
   // Serial.println("SPI HAL open");
@@ -2166,12 +1582,10 @@ static int spihal_write(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len) {
   return len;
 }
 
-
-
-
-
-  /**************************************** SPI WRITE/READ Functions
- * ***********************************************************/
+/****************************************
+***************************************** SPI WRITE/READ Functions
+*****************************************
+*****************************************/
 
 /*!
  *    @brief  Read from SPI into a buffer from the SPI device, with transaction

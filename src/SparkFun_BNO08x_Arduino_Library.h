@@ -75,13 +75,6 @@
 #endif
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-//Registers
-const byte CHANNEL_COMMAND = 0;
-const byte CHANNEL_EXECUTABLE = 1;
-const byte CHANNEL_CONTROL = 2;
-const byte CHANNEL_REPORTS = 3;
-const byte CHANNEL_WAKE_REPORTS = 4;
-const byte CHANNEL_GYRO = 5;
 
 //All the ways we can configure or talk to the BNO08x, figure 34, page 36 reference manual
 //These are used for low level communication with the sensor, on channel 2
@@ -116,13 +109,6 @@ const byte CHANNEL_GYRO = 5;
 #define SENSOR_REPORTID_AR_VR_STABILIZED_ROTATION_VECTOR 0x28
 #define SENSOR_REPORTID_AR_VR_STABILIZED_GAME_ROTATION_VECTOR 0x29
 
-//Record IDs from figure 29, page 29 reference manual
-//These are used to read the metadata for each sensor type
-#define FRS_RECORDID_ACCELEROMETER 0xE302
-#define FRS_RECORDID_GYROSCOPE_CALIBRATED 0xE306
-#define FRS_RECORDID_MAGNETIC_FIELD_CALIBRATED 0xE309
-#define FRS_RECORDID_ROTATION_VECTOR 0xE30B
-
 // Reset complete packet (BNO08X Datasheet p.24 Figure 1-27)
 #define EXECUTABLE_RESET_COMPLETE 0x1
 
@@ -145,10 +131,6 @@ const byte CHANNEL_GYRO = 5;
 #define CALIBRATE_ACCEL_GYRO_MAG 4
 #define CALIBRATE_STOP 5
 
-#define TARE_NOW 0
-#define TARE_PERSIST 1
-#define TARE_SET_REORIENTATION 2
-
 #define TARE_AXIS_ALL 0x07
 #define TARE_AXIS_Z   0x04
 
@@ -158,9 +140,6 @@ const byte CHANNEL_GYRO = 5;
 #define TARE_GYRO_INTEGRATED_ROTATION_VECTOR 3
 #define TARE_AR_VR_STABILIZED_ROTATION_VECTOR 4
 #define TARE_AR_VR_STABILIZED_GAME_ROTATION_VECTOR 5
-
-#define MAX_PACKET_SIZE 512 //Packets can be up to 32k but we don't have that much RAM.
-#define MAX_METADATA_SIZE 9 //This is in words. There can be many but we mostly only care about the first 9 (Qs, range, etc)
 
 class BNO08x
 {
@@ -173,7 +152,7 @@ public:
 	sh2_SensorValue_t sensorValue;
 
     void hardwareReset(void);
-    bool wasReset(void);
+    bool wasReset(void); //Returns true if the sensor has reported a reset. Reading this will unflag the reset.
 
 	uint8_t getResetReason(); // returns prodIds->resetCause
 
@@ -185,20 +164,11 @@ public:
 
 	bool softReset();	  //Try to reset the IMU via software
 	bool serviceBus(void);	
-	bool hasReset(); //Returns true if the sensor has reported a reset. Reading this will unflag the reset.
 	uint8_t resetReason(); //Query the IMU for the reason it last reset
 	bool modeOn();	  //Use the executable channel to turn the BNO on
 	bool modeSleep();	  //Use the executable channel to put the BNO to sleep
 
 	float qToFloat(int16_t fixedPointValue, uint8_t qPoint); //Given a Q value, converts fixed point floating to regular floating point number
-
-	boolean waitForI2C(); //Delay based polling for I2C traffic
-	boolean waitForSPI(); //Delay based polling for INT pin to go low
-	boolean receivePacket(void);
-	boolean getData(uint16_t bytesRemaining); //Given a number of bytes, send the requests in I2C_BUFFER_LENGTH chunks
-	boolean sendPacket(uint8_t channelNumber, uint8_t dataLength);
-	void printPacket(void); //Prints the current shtp header and data packets
-	void printHeader(void); //Prints the current shtp header (only)
 
 	bool enableRotationVector(uint16_t timeBetweenReports = 10);
 	bool enableGameRotationVector(uint16_t timeBetweenReports = 10);
@@ -274,15 +244,15 @@ public:
 	float getGravityZ();
 	uint8_t getGravityAccuracy();
 
-	void calibrateAccelerometer();
-	void calibrateGyro();
-	void calibrateMagnetometer();
-	void calibratePlanarAccelerometer();
-	void calibrateAll();
-	void endCalibration();
-	void saveCalibration();
-	void requestCalibrationStatus(); //Sends command to get status
-	boolean calibrationComplete();   //Checks ME Cal response for byte 5, R0 - Status
+	// void calibrateAccelerometer();
+	// void calibrateGyro();
+	// void calibrateMagnetometer();
+	// void calibratePlanarAccelerometer();
+	// void calibrateAll();
+	// void endCalibration();
+	// void saveCalibration();
+	// void requestCalibrationStatus(); //Sends command to get status
+	// boolean calibrationComplete();   //Checks ME Cal response for byte 5, R0 - Status
 
 	bool tareNow(bool zAxis=false, sh2_TareBasis_t basis=SH2_TARE_BASIS_ROTATION_VECTOR);
 	bool saveTare();
@@ -311,28 +281,25 @@ public:
 	float getPitch();
 	float getYaw();
 
-	void setFeatureCommand(uint8_t reportID, uint16_t timeBetweenReports);
-	void setFeatureCommand(uint8_t reportID, uint16_t timeBetweenReports, uint32_t specificConfig);
-	void sendCommand(uint8_t command);
-	void sendCalibrateCommand(uint8_t thingToCalibrate);
-	void sendTareCommand(uint8_t command, uint8_t axis=TARE_AXIS_ALL, uint8_t rotationVectorBasis=TARE_ROTATION_VECTOR);
+//	void sendCommand(uint8_t command);
+//	void sendCalibrateCommand(uint8_t thingToCalibrate);
 
 	//Metadata functions
-	int16_t getQ1(uint16_t recordID);
-	int16_t getQ2(uint16_t recordID);
-	int16_t getQ3(uint16_t recordID);
-	float getResolution(uint16_t recordID);
-	float getRange(uint16_t recordID);
-	uint32_t readFRSword(uint16_t recordID, uint8_t wordNumber);
-	void frsReadRequest(uint16_t recordID, uint16_t readOffset, uint16_t blockSize);
-	bool readFRSdata(uint16_t recordID, uint8_t startLocation, uint8_t wordsToRead);
+	// int16_t getQ1(uint16_t recordID);
+	// int16_t getQ2(uint16_t recordID);
+	// int16_t getQ3(uint16_t recordID);
+	// float getResolution(uint16_t recordID);
+	// float getRange(uint16_t recordID);
+	// uint32_t readFRSword(uint16_t recordID, uint8_t wordNumber);
+	// void frsReadRequest(uint16_t recordID, uint16_t readOffset, uint16_t blockSize);
+	// bool readFRSdata(uint16_t recordID, uint8_t startLocation, uint8_t wordsToRead);
 
 	//Global Variables
-	uint8_t shtpHeader[4]; //Each packet has a header of 4 bytes
-	uint8_t shtpData[MAX_PACKET_SIZE];
-	uint8_t sequenceNumber[6] = {0, 0, 0, 0, 0, 0}; //There are 6 com channels. Each channel has its own seqnum
-	uint8_t commandSequenceNumber = 0;				//Commands have a seqNum as well. These are inside command packet, the header uses its own seqNum per channel
-	uint32_t metaData[MAX_METADATA_SIZE];			//There is more than 10 words in a metadata record but we'll stop at Q point 3
+	// uint8_t shtpHeader[4]; //Each packet has a header of 4 bytes
+	// uint8_t shtpData[MAX_PACKET_SIZE];
+	// uint8_t sequenceNumber[6] = {0, 0, 0, 0, 0, 0}; //There are 6 com channels. Each channel has its own seqnum
+	// uint8_t commandSequenceNumber = 0;				//Commands have a seqNum as well. These are inside command packet, the header uses its own seqNum per channel
+	// uint32_t metaData[MAX_METADATA_SIZE];			//There is more than 10 words in a metadata record but we'll stop at Q point 3
 
 //	unsigned long _spiPortSpeed; //Optional user defined port speed
 //	uint8_t _cs;				 //Pins needed for SPI
@@ -341,8 +308,6 @@ private:
 
 	Stream *_debugPort;			 //The stream to send debug messages to if enabled. Usually Serial.
 	boolean _printDebug = false; //Flag to print debugging variables
-
-	bool _hasReset = false;		// Keeps track of any Reset Complete packets we receive. 
 
 	//These are the raw sensor values (without Q applied) pulled from the user requested Input Report
 	uint16_t rawAccelX, rawAccelY, rawAccelZ, accelAccuracy;

@@ -19,19 +19,11 @@ enableDebugging	KEYWORD2
 
 softReset	KEYWORD2
 resetReason	KEYWORD2
-hasReset    KEYWORD2
+wasReset    KEYWORD2
 modeOn	KEYWORD2
 modeSleep	KEYWORD2
 
 qToFloat	KEYWORD2
-
-waitForI2C	KEYWORD2
-waitForSPI	KEYWORD2
-receivePacket	KEYWORD2
-getData	KEYWORD2
-sendPacket	KEYWORD2
-printPacket	KEYWORD2
-printHeader	KEYWORD2
 
 enableRotationVector	KEYWORD2
 enableGameRotationVector	KEYWORD2
@@ -128,8 +120,6 @@ getStepCount	KEYWORD2
 getStabilityClassifier	KEYWORD2
 getActivityClassifier	KEYWORD2
 
-setFeatureCommand	KEYWORD2
-setFeatureCommand	KEYWORD2
 sendCommand	KEYWORD2
 sendCalibrateCommand	KEYWORD2
 calibrationComplete	KEYWORD2
@@ -158,7 +148,6 @@ getRawMagZ	KEYWORD2
 getRoll	KEYWORD2
 getPitch	KEYWORD2
 getYaw	KEYWORD2
-
 
 #######################################
 # Constants (LITERAL1)
