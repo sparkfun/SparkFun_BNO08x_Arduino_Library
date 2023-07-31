@@ -70,7 +70,7 @@ static bool i2c_write(const uint8_t *buffer, size_t len, bool stop = true,
 static bool i2c_read(uint8_t *buffer, size_t len, bool stop = true);
 static bool _i2c_read(uint8_t *buffer, size_t len, bool stop);
 
-static bool spihal_wait_for_int(void);
+static bool hal_wait_for_int(void);
 static int spihal_write(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len);
 static int spihal_read(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len,
                        uint32_t *t_us);
@@ -106,7 +106,7 @@ boolean BNO08x::begin(uint8_t deviceAddress, TwoWire &wirePort, uint8_t user_INT
 		pinMode(_reset_pin, INPUT_PULLUP);
 	}
 
-  	if(_int_pin != -1) spihal_wait_for_int();
+  	if(_int_pin != -1) hal_wait_for_int();
 
   	if (isConnected() == false) // Check for sensor by verifying ACK response
     	return (false); 
@@ -1743,7 +1743,7 @@ bool BNO08x::enableReport(sh2_SensorId_t sensorId, uint32_t interval_us,
   config.reportInterval_us = interval_us;
 
   if(_int_pin != -1) {
-	if (!spihal_wait_for_int()) {
+	if (!hal_wait_for_int()) {
       return 0;
   	}
   }
@@ -1763,7 +1763,7 @@ bool BNO08x::enableReport(sh2_SensorId_t sensorId, uint32_t interval_us,
 static int i2chal_open(sh2_Hal_t *self) {
   // Serial.println("I2C HAL open");
 
-  if(_int_pin != -1) spihal_wait_for_int();
+  if(_int_pin != -1) hal_wait_for_int();
   
   uint8_t softreset_pkt[] = {5, 0, 1, 0, 1};
   bool success = false;
@@ -1791,7 +1791,7 @@ static int i2chal_read(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len,
   // uint8_t *pBufferOrig = pBuffer;
 
   if(_int_pin != -1) {
-	if (!spihal_wait_for_int()) {
+	if (!hal_wait_for_int()) {
     	return 0;
   	}
   }
@@ -1838,7 +1838,7 @@ static int i2chal_read(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len,
     // Serial.print("Remaining to read: "); Serial.println(cargo_remaining);
 
 	if(_int_pin != -1) {
-		if (!spihal_wait_for_int()) {
+		if (!hal_wait_for_int()) {
 			return 0;
 		}
 	}
@@ -1891,7 +1891,7 @@ static int i2chal_write(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len) {
   uint16_t write_size = min(i2c_buffer_max, len);
 
   if(_int_pin != -1) {
-	if (!spihal_wait_for_int()) {
+	if (!hal_wait_for_int()) {
     	return 0;
   	}
   }
@@ -2089,12 +2089,12 @@ boolean _i2c_read(uint8_t *buffer, size_t len, bool stop) {
 static int spihal_open(sh2_Hal_t *self) {
   // Serial.println("SPI HAL open");
 
-  spihal_wait_for_int();
+  hal_wait_for_int();
 
   return 0;
 }
 
-static bool spihal_wait_for_int(void) {
+static bool hal_wait_for_int(void) {
   for (int i = 0; i < 500; i++) {
     if (!digitalRead(_int_pin))
       return true;
@@ -2117,7 +2117,7 @@ static int spihal_read(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len,
 
   uint16_t packet_size = 0;
 
-  if (!spihal_wait_for_int()) {
+  if (!hal_wait_for_int()) {
     return 0;
   }
 
@@ -2142,7 +2142,7 @@ static int spihal_read(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len,
     return 0;
   }
 
-  if (!spihal_wait_for_int()) {
+  if (!hal_wait_for_int()) {
     return 0;
   }
 
@@ -2157,7 +2157,7 @@ static int spihal_write(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len) {
   // Serial.print("SPI HAL write packet size: ");
   // Serial.println(len);
 
-  if (!spihal_wait_for_int()) {
+  if (!hal_wait_for_int()) {
     return 0;
   }
 
