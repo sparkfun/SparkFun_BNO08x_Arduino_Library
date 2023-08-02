@@ -1,7 +1,7 @@
 SparkFun VR IMU BNO08X Arduino Library
 ===========================================================
 
-[![SparkFun VR IMU Breakout - BNO086 (Qwiic)](URL for picture of part)](https://www.sparkfun.com/products/22857)
+[![SparkFun VR IMU Breakout - BNO086 (Qwiic)](https://cdn.sparkfun.com/r/600-600/assets/parts/2/3/0/2/7/22857-SEN_SparkFun_VR_IMU_Breakout-BNO086_Qwiic-_01.jpg)](https://www.sparkfun.com/products/22857)
 
 [*SparkFun VR IMU Breakout - BNO086 (Qwiic)(SEN-22857)*](https://www.sparkfun.com/products/22857)
 
