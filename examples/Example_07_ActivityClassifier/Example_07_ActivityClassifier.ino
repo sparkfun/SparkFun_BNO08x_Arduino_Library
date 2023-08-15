@@ -20,15 +20,15 @@
 
   Originally written by Nathan Seidle @ SparkFun Electronics, December 28th, 2017
 
-  Adjusted by Pete Lewis @ SparkFun Electronics, June 2023 to incorporate the 
+  Adjusted by Pete Lewis @ SparkFun Electronics, June 2023 to incorporate the
   CEVA Sensor Hub Driver, found here:
   https://github.com/ceva-dsp/sh2
 
-  Also, utilizing code from the Adafruit BNO08x Arduino Library by Bryan Siepert 
+  Also, utilizing code from the Adafruit BNO08x Arduino Library by Bryan Siepert
   for Adafruit Industries. Found here:
   https://github.com/adafruit/Adafruit_BNO08x
 
-  Also, utilizing I2C and SPI read/write functions and code from the Adafruit 
+  Also, utilizing I2C and SPI read/write functions and code from the Adafruit
   BusIO library found here:
   https://github.com/adafruit/Adafruit_BusIO
 
@@ -37,7 +37,7 @@
   Serial.print it out at 115200 baud to serial monitor.
 
   Feel like supporting our work? Buy a board from SparkFun!
-  https://www.sparkfun.com/products/14586
+  https://www.sparkfun.com/products/22857
 */
 
 #include <Wire.h>
@@ -69,7 +69,7 @@ void setup() {
 
 // Here is where you define the sensor outputs you want to receive
 void setReports(void) {
-  
+
   Serial.println("Setting desired reports");
 
   //See page 73 of reference manual. There is a 32 bit word where each
@@ -99,7 +99,7 @@ void loop() {
 
     // is it the correct sensor data we want?
     if (myIMU.getSensorEventID() == SENSOR_REPORTID_PERSONAL_ACTIVITY_CLASSIFIER) {
-    
+
     byte mostLikelyActivity = myIMU.getActivityClassifier();
 
     Serial.print("Most likely activity: ");

@@ -14,15 +14,15 @@
 
   Originally written by Nathan Seidle @ SparkFun Electronics, December 28th, 2017
 
-  Adjusted by Pete Lewis @ SparkFun Electronics, June 2023 to incorporate the 
+  Adjusted by Pete Lewis @ SparkFun Electronics, June 2023 to incorporate the
   CEVA Sensor Hub Driver, found here:
   https://github.com/ceva-dsp/sh2
 
-  Also, utilizing code from the Adafruit BNO08x Arduino Library by Bryan Siepert 
+  Also, utilizing code from the Adafruit BNO08x Arduino Library by Bryan Siepert
   for Adafruit Industries. Found here:
   https://github.com/adafruit/Adafruit_BNO08x
 
-  Also, utilizing I2C and SPI read/write functions and code from the Adafruit 
+  Also, utilizing I2C and SPI read/write functions and code from the Adafruit
   BusIO library found here:
   https://github.com/adafruit/Adafruit_BusIO
 
@@ -31,7 +31,7 @@
   Serial.print it out at 115200 baud to serial monitor.
 
   Feel like supporting our work? Buy a board from SparkFun!
-  https://www.sparkfun.com/products/14586
+  https://www.sparkfun.com/products/22857
 */
 
 #include <Wire.h>
@@ -98,28 +98,28 @@ void setReports(void) {
     Serial.println(F("Gyro enabled"));
   } else {
     Serial.println("Could not enable gyro");
-  }  
+  }
 
   if (myIMU.enableRawGyro() == true) {
     Serial.println(F("Raw Gyro enabled"));
   } else {
     Serial.println("Could not enable raw gyro");
-  }  
+  }
 
   if (myIMU.enableMagnetometer() == true) {
     Serial.println(F("Magnetometer enabled"));
   } else {
     Serial.println("Could not enable Magnetometer");
-  }    
+  }
 
   if (myIMU.enableRawMagnetometer() == true) {
     Serial.println(F("Raw Magnetometer enabled"));
   } else {
     Serial.println("Could not enable Raw Magnetometer");
-  }   
+  }
 
   Serial.println(F("Raw MEMS readings enabled"));
-  Serial.println(F("Output is: (accel) x y z (gyro) x y z (mag) x y z"));  
+  Serial.println(F("Output is: (accel) x y z (gyro) x y z (mag) x y z"));
 }
 
 void loop() {
@@ -131,10 +131,10 @@ void loop() {
   }
 
   // Has a new event come in on the Sensor Hub Bus?
-  if (myIMU.getSensorEvent() == true) 
+  if (myIMU.getSensorEvent() == true)
   {
 
-    // keep track of if we've recieved an updated value on any one of the 
+    // keep track of if we've recieved an updated value on any one of the
     // reports we're looking for.
     uint8_t reportID = myIMU.getSensorEventID();
 
@@ -149,12 +149,12 @@ void loop() {
       gx = myIMU.getRawGyroX();
       gy = myIMU.getRawGyroY();
       gz = myIMU.getRawGyroZ();
-      break;      
+      break;
     case SENSOR_REPORTID_RAW_MAGNETOMETER:
       mx = myIMU.getRawMagX();
       my = myIMU.getRawMagY();
       mz = myIMU.getRawMagZ();
-      break;       
+      break;
     default:
       break;
     }
@@ -186,7 +186,7 @@ void loop() {
       Serial.print(mz);
       Serial.print("\t");
 
-      Serial.println();        
+      Serial.println();
     }
   }
 }

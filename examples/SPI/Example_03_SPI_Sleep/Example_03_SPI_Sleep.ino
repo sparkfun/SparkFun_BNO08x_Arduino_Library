@@ -16,15 +16,15 @@
 
   Originally written by Nathan Seidle @ SparkFun Electronics, December 28th, 2017
 
-  Adjusted by Pete Lewis @ SparkFun Electronics, June 2023 to incorporate the 
+  Adjusted by Pete Lewis @ SparkFun Electronics, June 2023 to incorporate the
   CEVA Sensor Hub Driver, found here:
   https://github.com/ceva-dsp/sh2
 
-  Also, utilizing code from the Adafruit BNO08x Arduino Library by Bryan Siepert 
+  Also, utilizing code from the Adafruit BNO08x Arduino Library by Bryan Siepert
   for Adafruit Industries. Found here:
   https://github.com/adafruit/Adafruit_BNO08x
 
-  Also, utilizing I2C and SPI read/write functions and code from the Adafruit 
+  Also, utilizing I2C and SPI read/write functions and code from the Adafruit
   BusIO library found here:
   https://github.com/adafruit/Adafruit_BusIO
 
@@ -33,7 +33,7 @@
   D25  --> CS
   PICO --> SI
   POCI --> SO
-  SCK  --> SCK  
+  SCK  --> SCK
   D17  --> INT
   D16  --> RST
   3V3  --> 3V3
@@ -47,7 +47,7 @@
   Serial.print it out at 115200 baud to serial monitor.
 
   Feel like supporting our work? Buy a board from SparkFun!
-  https://www.sparkfun.com/products/14586
+  https://www.sparkfun.com/products/22857
 */
 
 #include "SparkFun_BNO08x_Arduino_Library.h"  // Click here to get the library: http://librarymanager/All#SparkFun_BNO08x
