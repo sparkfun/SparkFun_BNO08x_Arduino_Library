@@ -149,7 +149,6 @@ void loop() {
       Serial.print(y, 2);
       Serial.print(F(","));
       Serial.print(z, 2);
-      Serial.print(F(","));
 
       Serial.println();
 

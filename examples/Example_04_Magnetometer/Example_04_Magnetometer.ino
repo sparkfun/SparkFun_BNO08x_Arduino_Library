@@ -95,7 +95,6 @@ void loop() {
       Serial.print(z, 2);
       Serial.print(F(","));
       printAccuracyLevel(accuracy);
-      Serial.print(F(","));
 
       Serial.println();
     }

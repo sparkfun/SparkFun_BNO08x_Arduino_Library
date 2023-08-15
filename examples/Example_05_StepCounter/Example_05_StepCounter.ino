@@ -86,7 +86,6 @@ void loop() {
       unsigned int steps = myIMU.getStepCount();
 
       Serial.print(steps);
-      Serial.print(F(","));
 
       Serial.println();
     }

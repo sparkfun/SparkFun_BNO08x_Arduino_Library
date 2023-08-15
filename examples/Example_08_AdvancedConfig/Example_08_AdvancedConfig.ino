@@ -118,7 +118,6 @@ void loop() {
       Serial.print(quatReal, 2);
       Serial.print(F(","));
       Serial.print(quatRadianAccuracy, 2);
-      Serial.print(F(","));
 
       Serial.println();
     }
