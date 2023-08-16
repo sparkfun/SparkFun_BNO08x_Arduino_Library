@@ -43,7 +43,7 @@ Documentation
 --------------
 
 * **[Installing an Arduino Library Guide](https://learn.sparkfun.com/tutorials/installing-an-arduino-library)** - Basic information on how to install an Arduino library.
-* **[Hookup Guide]()** - Basic hookup guide for the SparkFun VR IMU Breakout - BNO086.
+* **[Hookup Guide](https://docs.sparkfun.com/SparkFun_VR_IMU_Breakout_BNO086_QWIIC/)** - Basic hookup guide for the SparkFun VR IMU Breakout - BNO086.
 * **[Product Repository](https://github.com/sparkfun/SparkFun_VR_IMU_Breakout_BNO086_QWIIC)** - Main repository for the BNO086 (including hardware files)
 
 License Information
