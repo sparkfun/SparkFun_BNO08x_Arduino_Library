@@ -27,7 +27,7 @@
   https://github.com/adafruit/Adafruit_BusIO
 
   Hardware Connections:
-  Plug the sensor into IoT Redboard via QWIIC cable.
+  Plug the sensor into IoT RedBoard via QWIIC cable.
   Serial.print it out at 115200 baud to serial monitor.
 
   Feel like supporting our work? Buy a board from SparkFun!
@@ -98,7 +98,6 @@ void loop() {
     Serial.print(gravityZ, 2);
     Serial.print(F(","));
     Serial.print(gravityAccuracy, 2);
-    Serial.print(F(","));
 
     Serial.println();
     }

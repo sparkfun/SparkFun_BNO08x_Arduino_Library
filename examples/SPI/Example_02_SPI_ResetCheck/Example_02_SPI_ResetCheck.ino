@@ -32,7 +32,7 @@
   https://github.com/adafruit/Adafruit_BusIO
 
   Hardware Connections:
-  IoT Readboard --> BNO08x
+  IoT RedBoard --> BNO08x
   D25  --> CS
   PICO --> SI
   POCI --> SO

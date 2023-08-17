@@ -30,7 +30,7 @@
   https://github.com/adafruit/Adafruit_BusIO
 
   Hardware Connections:
-  IoT Readboard --> BNO08x
+  IoT RedBoard --> BNO08x
   QWIIC --> QWIIC
   D17  --> INT
   D16  --> RST

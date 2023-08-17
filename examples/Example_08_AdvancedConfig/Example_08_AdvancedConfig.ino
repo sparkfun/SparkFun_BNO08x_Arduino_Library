@@ -30,8 +30,14 @@
   BusIO library found here:
   https://github.com/adafruit/Adafruit_BusIO
 
-  Hardware Connections:
-  Plug the sensor into IoT Redboard via QWIIC cable.
+  IoT RedBoard --> BNO08x
+  3.3V       -->    3.3V
+  GND        -->    GND
+  SCL1 (D17) -->    SCL
+  SDA1 (D25) -->    SDA
+
+  Note: Make sure to close the ADR jumper on the back of the board as well.
+
   Serial.print it out at 115200 baud to serial monitor.
 
   Feel like supporting our work? Buy a board from SparkFun!
