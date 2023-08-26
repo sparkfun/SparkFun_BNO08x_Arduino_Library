@@ -1,7 +1,7 @@
 /*
   Using the BNO08x IMU
 
-  This is a fun one! The BNO080 can guess at what activity you are doing:
+  This is a fun one! The BNO086 can guess at what activity you are doing:
   In vehicle
   On bicycle
   On foot
