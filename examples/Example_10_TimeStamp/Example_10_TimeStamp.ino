@@ -36,7 +36,7 @@
 
 #include <Wire.h>
 
-#include "SparkFun_BNO08x_Arduino_Library.h" // Click here to get the library: http://librarymanager/All#SparkFun_BNO080
+#include "SparkFun_BNO08x_Arduino_Library.h" // Click here to get the library: http://librarymanager/All#SparkFun_BNO08x
 BNO08x myIMU;
 
 void setup() {
