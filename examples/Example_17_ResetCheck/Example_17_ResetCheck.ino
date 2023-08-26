@@ -60,7 +60,7 @@ BNO08x myIMU;
 
 int cyclecount = 0;
 
-#define BNO08X_ADDR 0x4B  // SparkFun BNO080 Breakout (Qwiic) defaults to 0x4B
+#define BNO08X_ADDR 0x4B  // SparkFun BNO086 Breakout (Qwiic) defaults to 0x4B
 //#define BNO08X_ADDR 0x4A // Alternate address if ADR jumper is closed
 
 void setup() {
