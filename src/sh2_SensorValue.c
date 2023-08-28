@@ -16,7 +16,7 @@
  */
 
 /*
- * BNO080 Sensor Event decoding
+ * BNO08x Sensor Event decoding
  */
 
 #include "sh2_SensorValue.h"

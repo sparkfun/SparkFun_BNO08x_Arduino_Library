@@ -1,7 +1,11 @@
 /*
   Using the BNO08x IMU
 
+<<<<<<< Updated upstream
   This is a fun one! The BNO086 can guess at what activity you are doing:
+=======
+  This is a fun one! The BNO08x can guess at what activity you are doing:
+>>>>>>> Stashed changes
   In vehicle
   On bicycle
   On foot
@@ -42,7 +46,11 @@
 
 #include <Wire.h>
 
+<<<<<<< Updated upstream
 #include "SparkFun_BNO08x_Arduino_Library.h" // Click here to get the library: http://librarymanager/All#SparkFun_BNO08x
+=======
+#include "SparkFun_BNO08x_Arduino_Library.h" // CTRL+Click here to get the library: http://librarymanager/All#SparkFun_BNO08x
+>>>>>>> Stashed changes
 BNO08x myIMU;
 
 void setup() {

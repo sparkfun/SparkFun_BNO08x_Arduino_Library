@@ -49,7 +49,7 @@
   https://www.sparkfun.com/products/22857
 */
 
-#include "SparkFun_BNO08x_Arduino_Library.h"  // Click here to get the library: http://librarymanager/All#SparkFun_BNO08x
+#include "SparkFun_BNO08x_Arduino_Library.h"  // CTRL+Click here to get the library: http://librarymanager/All#SparkFun_BNO08x
 BNO08x myIMU;
 
 // For SPI, we need some extra pins defined:

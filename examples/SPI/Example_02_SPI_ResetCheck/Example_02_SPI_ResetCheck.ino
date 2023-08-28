@@ -52,7 +52,7 @@
   https://www.sparkfun.com/products/22857
 */
 
-#include "SparkFun_BNO08x_Arduino_Library.h"  // Click here to get the library: http://librarymanager/All#SparkFun_BNO08x
+#include "SparkFun_BNO08x_Arduino_Library.h"  // CTRL+Click here to get the library: http://librarymanager/All#SparkFun_BNO08x
 BNO08x myIMU;
 
 // For SPI, we need some extra pins defined:
@@ -63,7 +63,11 @@ BNO08x myIMU;
 
 int cyclecount = 0;
 
+<<<<<<< Updated upstream
 #define BNO08X_ADDR 0x4B  // SparkFun BNO086 Breakout (Qwiic) defaults to 0x4B
+=======
+#define BNO08X_ADDR 0x4B  // SparkFun BNO08x Breakout (Qwiic) defaults to 0x4B
+>>>>>>> Stashed changes
 //#define BNO08X_ADDR 0x4A // Alternate address if ADR jumper is closed
 
 void setup() {
