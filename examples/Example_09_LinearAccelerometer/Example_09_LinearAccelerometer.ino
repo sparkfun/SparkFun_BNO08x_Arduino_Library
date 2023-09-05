@@ -33,11 +33,8 @@
 
 #include <Wire.h>
 
-<<<<<<< Updated upstream
-#include "SparkFun_BNO08x_Arduino_Library.h" // Click here to get the library: http://librarymanager/All#SparkFun_BNO08x
-=======
 #include "SparkFun_BNO08x_Arduino_Library.h" // CTRL+Click here to get the library: http://librarymanager/All#SparkFun_BNO08x
->>>>>>> Stashed changes
+
 BNO08x myIMU;
 
 void setup() {
