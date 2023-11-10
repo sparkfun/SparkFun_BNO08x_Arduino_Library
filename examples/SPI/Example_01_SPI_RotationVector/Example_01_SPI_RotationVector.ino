@@ -90,6 +90,8 @@ void setReports(void) {
   } else {
     Serial.println("Could not enable rotation vector");
   }
+  delay(100); // This delay allows enough time for the BNO086 to accept the new 
+              // configuration and clear its reset status
 }
 
 void loop() {
