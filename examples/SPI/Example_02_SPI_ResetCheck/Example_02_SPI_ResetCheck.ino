@@ -80,14 +80,9 @@ void setup() {
   }
   Serial.println("BNO08x found!");
 
-  if( myIMU.requestResetReason() == true ) {
-      Serial.print(F("Reset Reason: "));
-      printResetReasonName(myIMU.getResetReason());
-      Serial.println();
-    }
-  else {
-    Serial.println("Reset Reason Request failed.");
-  }
+  Serial.print(F("Reset Reason: "));
+  printResetReasonName(myIMU.getResetReason());
+  Serial.println();
 
   setReports();
 
@@ -104,6 +99,8 @@ void setReports(void) {
   } else {
     Serial.println("Could not enable gyro");
   }
+  delay(100); // This delay allows enough time for the BNO086 to accept the new 
+              // configuration and clear its reset status
 }
 
 void loop() {
@@ -115,14 +112,9 @@ void loop() {
   // different resets.
   if (myIMU.wasReset()) {
     Serial.println(" ------------------ BNO08x has reset. ------------------ ");
-    if( myIMU.requestResetReason() == true ) {
-        Serial.print(F("Reset Reason: "));
-        printResetReasonName(myIMU.getResetReason());
-        Serial.println();
-      }
-    else {
-      Serial.println("Reset Reason Request failed.");
-    }
+    Serial.print(F("Reset Reason: "));
+    printResetReasonName(myIMU.getResetReason());
+    Serial.println();
 
     setReports();  // We'll need to re-enable reports after any reset.
   }
