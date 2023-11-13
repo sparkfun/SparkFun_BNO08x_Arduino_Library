@@ -1,9 +1,9 @@
 /*
- * Copyright 2015-2018 Hillcrest Laboratories, Inc.
+ * Copyright 2015-2021 CEVA, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License and 
- * any applicable agreements you may have with Hillcrest Laboratories, Inc.
+ * any applicable agreements you may have with CEVA, Inc.
  * You may obtain a copy of the License at
  *
  *   http://www.apache.org/licenses/LICENSE-2.0
@@ -19,17 +19,13 @@
  * @file sh2.h
  * @author David Wheeler
  * @date 22 Sept 2015
- * @brief API Definition for Hillcrest SH-2 Sensor Hub.
+ * @brief API Definition for SH-2 Sensor Hub.
  *
- * The sh2 API provides an interface to the Hillcrest Labs sensor hub devices.
+ * The sh2 API provides an interface to the CEVA sensor hub devices.
  */
 
 #ifndef SH2_H
 #define SH2_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -45,9 +41,10 @@ extern "C" {
  *
  * See the SH-2 Reference Manual for more detail.
  */
-#define SH2_MAX_SENSOR_EVENT_LEN (16)
+#define SH2_MAX_SENSOR_EVENT_LEN (60)
 typedef struct sh2_SensorEvent {
     uint64_t timestamp_uS;
+    int64_t delay_uS;
     uint8_t len;
     uint8_t reportId;
     uint8_t report[SH2_MAX_SENSOR_EVENT_LEN];
@@ -121,9 +118,12 @@ enum sh2_SensorId_e {
     SH2_ARVR_STABILIZED_GRV = 0x29,
     SH2_GYRO_INTEGRATED_RV = 0x2A,
     SH2_IZRO_MOTION_REQUEST = 0x2B,
+    SH2_RAW_OPTICAL_FLOW = 0x2C,
+    SH2_DEAD_RECKONING_POSE = 0x2D,
+    SH2_WHEEL_ENCODER = 0x2E,
 
     // UPDATE to reflect greatest sensor id
-    SH2_MAX_SENSOR_ID = 0x2B,
+    SH2_MAX_SENSOR_ID = 0x2E,
 };
 typedef uint8_t sh2_SensorId_t;
 
@@ -144,6 +144,12 @@ typedef struct sh2_SensorConfig {
 
     /* Always on enabled */
     bool alwaysOnEnabled;  /**< @brief Sensor remains on in sleep state */
+
+    bool sniffEnabled; /**< @brief Any output from this sensor should
+                            be sent to host, but reportInterval_us and
+                            sensorSpecific do not influence sensor
+                            operation. Not supported by all sensors. */
+
     /* 16-bit signed fixed point integer representing the value a
      * sensor output must exceed in order to trigger another input
      * report. A setting of 0 causes all reports to be sent.
@@ -233,6 +239,12 @@ typedef enum sh2_TareAxis {
     SH2_TARE_X = 1,  /**< @brief sh2_tareNow() axes bit field */
     SH2_TARE_Y = 2,  /**< @brief sh2_tareNow() axes bit field */
     SH2_TARE_Z = 4,  /**< @brief sh2_tareNow() axes bit field */
+    SH2_TARE_CONTROL_VECTOR_X = (1 << 3),         /**< @brief Use X axis of source and frame to perform tare */
+    SH2_TARE_CONTROL_VECTOR_Y = (0 << 3),         /**< @brief Use Y axis of source and frame to perform tare */
+    SH2_TARE_CONTROL_VECTOR_Z = (2 << 3),         /**< @brief Use Z axis of source and frame to perform tare */
+    SH2_TARE_CONTROL_SEQUENCE_DEFAULT = (0 << 5), /**< @brief Tare "typical" toration for source/axis combination */
+    SH2_TARE_CONTROL_SEQUENCE_PRE = (1 << 5),     /**< @brief Apply to pre-rotation (tare world to device) */
+    SH2_TARE_CONTROL_SEQUENCE_POST = (2 << 5),    /**< @brief Apply to post-rotation (tare device to world) */
 } sh2_TareAxis_t;
 
 /**
@@ -313,6 +325,17 @@ typedef enum {
 #define ME_TIME_SOURCE_SELECT                    (0xD403)
 #define UART_FORMAT                              (0xA1A1)
 #define GYRO_INTEGRATED_RV_CONFIG                (0xA1A2)
+#define DR_IMU_CONFIG                            (0xDED2)
+#define DR_VEL_EST_CONFIG                        (0xDED3)
+#define DR_SYNC_CONFIG                           (0xDED4)
+#define DR_QUAL_CONFIG                           (0xDED5)
+#define DR_CAL_CONFIG                            (0xDED6)
+#define DR_LIGHT_REC_CONFIG                      (0xDED8)
+#define DR_FUSION_CONFIG                         (0xDED9)
+#define DR_OF_CONFIG                             (0xDEDA)
+#define DR_WHEEL_CONFIG                          (0xDEDB)
+#define DR_CAL                                   (0xDEDC)
+#define DR_WHEEL_SELECT                          (0xDEDF)
 #define FRS_ID_META_RAW_ACCELEROMETER            (0xE301)
 #define FRS_ID_META_ACCELEROMETER                (0xE302)
 #define FRS_ID_META_LINEAR_ACCELERATION          (0xE303)
@@ -349,6 +372,7 @@ typedef enum {
 #define FRS_ID_META_ARVR_STABILIZED_RV           (0xE322)
 #define FRS_ID_META_ARVR_STABILIZED_GRV          (0xE323)
 #define FRS_ID_META_GYRO_INTEGRATED_RV           (0xE324)
+#define FRS_ID_META_RAW_OPTICAL_FLOW             (0xE326)
 
 /**
  * @brief Interactive ZRO Motion Intent
@@ -360,6 +384,7 @@ typedef enum {
     SH2_IZRO_MI_STATIONARY_NO_VIBRATION,
     SH2_IZRO_MI_STATIONARY_WITH_VIBRATION,
     SH2_IZRO_MI_IN_MOTION,
+    SH2_IZRO_MI_ACCELERATING,
 } sh2_IZroMotionIntent_t;
 
 /**
@@ -394,6 +419,9 @@ enum sh2_ShtpEvent_e {
     SH2_SHTP_TOO_LARGE_PAYLOADS = 2,
     SH2_SHTP_BAD_RX_CHAN = 3,
     SH2_SHTP_BAD_TX_CHAN = 4,
+    SH2_SHTP_BAD_FRAGMENT = 5,
+    SH2_SHTP_BAD_SN = 6,
+    SH2_SHTP_INTERRUPTED_PAYLOAD = 7,
 };
 typedef uint8_t sh2_ShtpEvent_t;
 
@@ -624,6 +652,14 @@ int sh2_getOscType(sh2_OscType_t *pOscType);
 #define SH2_CAL_GYRO  (0x02)
 #define SH2_CAL_MAG   (0x04)
 #define SH2_CAL_PLANAR (0x08)
+#define SH2_CAL_ON_TABLE (0x10)
+
+// Bits 5 and 6 encode cal zero gyro control value.
+#define SH2_CAL_ZERO_GYRO_CONTROL_MASK (0x60)
+#define SH2_CAL_ZERO_GYRO_CONTROL_ON_TABLE_DETECT (0 << 5)
+#define SH2_CAL_ZERO_GYRO_CONTROL_NEVER (1 << 5)
+#define SH2_CAL_ZERO_GYRO_CONTROL_ON_TABLE_CLASS (2 << 5)
+#define SH2_CAL_ZERO_GYRO_CONTROL_ON_TABLE_CLASS_OR_LONG_TERM_STABLE (3 << 5)
 
 /**
  * @brief Enable/Disable dynamic calibration for certain sensors
@@ -688,8 +724,22 @@ int sh2_finishCal(sh2_CalStatus_t *status);
  */
 int sh2_setIZro(sh2_IZroMotionIntent_t intent);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+/**
+ * @brief Report wheel position/velocity to sensor hub.
+ * @parameter wheelIndex platform-dependent: 0= left, 1= right for
+ *   typical differential drive robot
+ * @parameter timestamp microsecond timestamp (hub scale) of measurement
+ * @parameter wheelData raw wheel position or velocity
+ * @parameter dataType 0 if data is position, 1 if data is velocity
+ * @return SH2_OK (0), on success.  Negative value from sh2_err.h on error.
+ */
+int sh2_reportWheelEncoder(uint8_t wheelIndex, uint32_t timestamp, int16_t wheelData, uint8_t dataType);
+
+/**
+ * @brief Save Dead Reckoning Calibration Data to flash.
+ *
+ * @return SH2_OK (0), on success.  Negative value from sh2_err.h on error.
+ */
+int sh2_saveDeadReckoningCalNow(void);
 
 #endif

@@ -1,9 +1,9 @@
 /*
- * Copyright 2015-16 Hillcrest Laboratories, Inc.
+ * Copyright 2015-21 CEVA, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License and 
- * any applicable agreements you may have with Hillcrest Laboratories, Inc.
+ * any applicable agreements you may have with CEVA, Inc.
  * You may obtain a copy of the License at
  *
  *   http://www.apache.org/licenses/LICENSE-2.0
@@ -25,10 +25,6 @@
 
 #ifndef SH2_SENSORVALUE_H
 #define SH2_SENSORVALUE_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <stdint.h>
 
@@ -298,7 +294,6 @@ typedef struct sh2_SigMotion {
 #define STABILITY_CLASSIFIER_STATIONARY (2)
 #define STABILITY_CLASSIFIER_STABLE (3)
 #define STABILITY_CLASSIFIER_MOTION (4)
-#define STABILITY_CLASSIFIER_RESERVED (5)
 typedef struct sh2_StabilityClassifier {
     uint8_t classification;
 } sh2_StabilityClassifier_t;
@@ -431,6 +426,46 @@ typedef struct sh2_IZroRequest {
     sh2_IZroMotionRequest_t request;
 } sh2_IZroRequest_t;
 
+typedef struct sh2_RawOptFlow {
+    uint32_t timestamp;
+    int16_t dt;
+    int16_t dx;
+    int16_t dy;
+    int16_t iq;
+    uint8_t resX;
+    uint8_t resY;
+    uint8_t shutter;
+    uint8_t frameMax;
+    uint8_t frameAvg;
+    uint8_t frameMin;
+    uint8_t laserOn;
+} sh2_RawOptFlow_t;
+
+typedef struct sh2_DeadReckoningPose {
+    uint32_t timestamp;
+    float linPosX;
+    float linPosY;
+    float linPosZ;
+    float i;
+    float j;
+    float k;
+    float real;
+    float linVelX;
+    float linVelY;
+    float linVelZ;
+    float angVelX;
+    float angVelY;
+    float angVelZ;
+} sh2_DeadReckoningPose_t;
+
+typedef struct sh2_WheelEncoder {
+    uint32_t timestamp;
+    uint8_t wheelIndex;
+    uint8_t dataType;
+    uint16_t data;
+} sh2_WheelEncoder_t;
+
+
 typedef struct sh2_SensorValue {
     
     /** Which sensor produced this event. */
@@ -499,14 +534,12 @@ typedef struct sh2_SensorValue {
         sh2_RotationVector_t arvrStabilizedGRV;
         sh2_GyroIntegratedRV_t gyroIntegratedRV;
         sh2_IZroRequest_t izroRequest;
+        sh2_RawOptFlow_t rawOptFlow;
+        sh2_DeadReckoningPose_t deadReckoningPose;
+        sh2_WheelEncoder_t wheelEncoder;
     } un;
 } sh2_SensorValue_t;
 
 int sh2_decodeSensorEvent(sh2_SensorValue_t *value, const sh2_SensorEvent_t *event);
-
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif

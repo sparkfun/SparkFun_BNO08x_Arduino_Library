@@ -1,9 +1,9 @@
 /*
- * Copyright 2015-16 Hillcrest Laboratories, Inc.
+ * Copyright 2015-21 CEVA, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License and 
- * any applicable agreements you may have with Hillcrest Laboratories, Inc.
+ * any applicable agreements you may have with CEVA, Inc.
  * You may obtain a copy of the License at
  *
  *   http://www.apache.org/licenses/LICENSE-2.0
@@ -16,16 +16,18 @@
  */
 
 /*
- * BNO08x Sensor Event decoding
+ * BNO080 Sensor Event decoding
  */
 
 #include "sh2_SensorValue.h"
 #include "sh2_err.h"
 #include "sh2_util.h"
 
+#include <stdio.h>
+
 #define SCALE_Q(n) (1.0f / (1 << n))
 
-const float scaleRadToDeg = 180.0 / 3.14159265358;
+const float scaleRadToDeg = 180.0f / 3.14159265358f;
 
 // ------------------------------------------------------------------------
 // Forward declarations
@@ -68,6 +70,9 @@ static int decodeArvrStabilizedRV(sh2_SensorValue_t *value, const sh2_SensorEven
 static int decodeArvrStabilizedGRV(sh2_SensorValue_t *value, const sh2_SensorEvent_t *event);
 static int decodeGyroIntegratedRV(sh2_SensorValue_t *value, const sh2_SensorEvent_t *event);
 static int decodeIZroRequest(sh2_SensorValue_t *value, const sh2_SensorEvent_t *event);
+static int decodeRawOptFlow(sh2_SensorValue_t *value, const sh2_SensorEvent_t *event);
+static int decodeDeadReckoningPose(sh2_SensorValue_t *value, const sh2_SensorEvent_t *event);
+static int decodeWheelEncoder(sh2_SensorValue_t *value, const sh2_SensorEvent_t *event);
 
 // ------------------------------------------------------------------------
 // Public API
@@ -208,6 +213,15 @@ int sh2_decodeSensorEvent(sh2_SensorValue_t *value, const sh2_SensorEvent_t *eve
             break;
         case SH2_IZRO_MOTION_REQUEST:
             rc = decodeIZroRequest(value, event);
+            break;
+        case SH2_RAW_OPTICAL_FLOW:
+            rc = decodeRawOptFlow(value, event);
+            break;
+        case SH2_DEAD_RECKONING_POSE:
+            rc = decodeDeadReckoningPose(value, event);
+            break;
+        case SH2_WHEEL_ENCODER:
+            rc = decodeWheelEncoder(value, event);
             break;
         default:
             // Unknown report id
@@ -547,5 +561,53 @@ static int decodeIZroRequest(sh2_SensorValue_t *value, const sh2_SensorEvent_t *
     value->un.izroRequest.intent = (sh2_IZroMotionIntent_t)event->report[4];
     value->un.izroRequest.request = (sh2_IZroMotionRequest_t)event->report[5];
 
+    return SH2_OK;
+}
+
+static int decodeRawOptFlow(sh2_SensorValue_t *value, const sh2_SensorEvent_t *event)
+{
+    // Decode Raw optical flow
+    value->un.rawOptFlow.dx = read16(&event->report[4]);
+    value->un.rawOptFlow.dy = read16(&event->report[6]);
+    value->un.rawOptFlow.iq = read16(&event->report[8]);
+    value->un.rawOptFlow.resX = read8(&event->report[10]);
+    value->un.rawOptFlow.resY = read8(&event->report[11]);
+    value->un.rawOptFlow.shutter = read8(&event->report[12]);
+    value->un.rawOptFlow.frameMax = read8(&event->report[13]);
+    value->un.rawOptFlow.frameAvg = read8(&event->report[14]);
+    value->un.rawOptFlow.frameMin = read8(&event->report[15]);
+    value->un.rawOptFlow.laserOn = read8(&event->report[16]);
+    value->un.rawOptFlow.dt = read16(&event->report[18]);
+    value->un.rawOptFlow.timestamp = read32(&event->report[20]);
+    
+    return SH2_OK;
+}
+
+static int decodeDeadReckoningPose(sh2_SensorValue_t *value, const sh2_SensorEvent_t *event){
+    value->un.deadReckoningPose.timestamp = read32(&event->report[4]);
+    value->un.deadReckoningPose.linPosX = read32(&event->report[8]) * SCALE_Q(17);
+    value->un.deadReckoningPose.linPosY = read32(&event->report[12]) * SCALE_Q(17);
+    value->un.deadReckoningPose.linPosZ = read32(&event->report[16]) * SCALE_Q(17);
+
+    value->un.deadReckoningPose.i = read32(&event->report[20]) * SCALE_Q(30);
+    value->un.deadReckoningPose.j = read32(&event->report[24]) * SCALE_Q(30);
+    value->un.deadReckoningPose.k = read32(&event->report[28]) * SCALE_Q(30);
+    value->un.deadReckoningPose.real = read32(&event->report[32]) * SCALE_Q(30);
+
+    value->un.deadReckoningPose.linVelX = read32(&event->report[36]) * SCALE_Q(25);
+    value->un.deadReckoningPose.linVelY = read32(&event->report[40]) * SCALE_Q(25);
+    value->un.deadReckoningPose.linVelZ = read32(&event->report[44]) * SCALE_Q(25);
+
+    value->un.deadReckoningPose.angVelX = read32(&event->report[48]) * SCALE_Q(25);
+    value->un.deadReckoningPose.angVelY = read32(&event->report[52]) * SCALE_Q(25);
+    value->un.deadReckoningPose.angVelZ = read32(&event->report[56]) * SCALE_Q(25);
+    return SH2_OK;
+}
+
+static int decodeWheelEncoder(sh2_SensorValue_t *value, const sh2_SensorEvent_t *event){
+    value->un.wheelEncoder.timestamp = read32(&event->report[4]);
+    value->un.wheelEncoder.wheelIndex = read8(&event->report[8]);
+    value->un.wheelEncoder.dataType = read8(&event->report[9]);
+    value->un.wheelEncoder.data = read16(&event->report[10]);
     return SH2_OK;
 }

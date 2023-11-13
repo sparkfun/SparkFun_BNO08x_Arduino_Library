@@ -1,9 +1,9 @@
 /*
- * Copyright 2018 Hillcrest Laboratories, Inc.
+ * Copyright 2018-2021 CEVA, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License and 
- * any applicable agreements you may have with Hillcrest Laboratories, Inc.
+ * any applicable agreements you may have with CEVA, Inc.
  * You may obtain a copy of the License at
  *
  *   http://www.apache.org/licenses/LICENSE-2.0
@@ -16,7 +16,7 @@
  */
 
 /*
- * SH2 HAL Interface for Non-RTOS Applications.
+ * SH2 HAL Interface
  */
 
 // Include guard
@@ -25,23 +25,17 @@
 
 #include <stdint.h>
 
-// SH2 Implementations generally have a max out transfer len of 256
-#define SH2_HAL_MAX_TRANSFER_OUT (256)
-#define SH2_HAL_MAX_PAYLOAD_OUT  (256)
+// Maximum SHTP Transfer and Payload sizes
+#define SH2_HAL_MAX_TRANSFER_OUT (128)
+#define SH2_HAL_MAX_PAYLOAD_OUT  (128)
 
-// Although some implementations adversize a max in transfer of 32K,
-// in practice, the largest transfer performed is the advertisements
-// which is 272 bytes at time of writing.
-#define SH2_HAL_MAX_TRANSFER_IN  (384)
-#define SH2_HAL_MAX_PAYLOAD_IN   (384)
-
-// This needs to be a power of 2, greater than max of the above.
-#define SH2_HAL_DMA_SIZE (512)
+#define SH2_HAL_MAX_TRANSFER_IN  (1024)
+#define SH2_HAL_MAX_PAYLOAD_IN   (1024)
 
 typedef struct sh2_Hal_s sh2_Hal_t;
 
 // The SH2 interface uses these functions to access the underlying
-// communications device, so the system integrator will need to
+// communications device. The system designer will need to
 // implement these.  At system intialization time, an sh2_Hal_t
 // structure should be initialized with pointers to all the hardware
 // access layer functions.  A pointer to this structure must then be
@@ -51,7 +45,7 @@ typedef struct sh2_Hal_s sh2_Hal_t;
 // example DFU code also uses this interface but each function has
 // somewhat different requirements.  So a separate instance of an
 // sh2_Hal_t structure, pointing to different functions, is
-// recommended for supporting DFU.
+// necessary to support DFU.
 
 struct sh2_Hal_s {
     // This function initializes communications with the device.  It
@@ -67,11 +61,11 @@ struct sh2_Hal_s {
     void (*close)(sh2_Hal_t *self);
 
     // This function supports reading data from the sensor hub.
-    // It will be called frequently to sevice the device.
+    // It will be called frequently to service the device.
     //
     // If the HAL has received a full SHTP transfer, this function
     // should load the data into pBuffer, set the timestamp to the
-    // time the interrupt was detected and return the non-zero length
+    // time the interrupt was detected, and return the non-zero length
     // of data in this transfer.
     //
     // If the HAL has not recevied a full SHTP transfer, this function
@@ -87,7 +81,7 @@ struct sh2_Hal_s {
     // It is called each time the application has a block of data to
     // transfer to the device.
     //
-    // If the device isn't ready to receive data this function can
+    // If the device isn't ready to receive data, this function can
     // return 0 without performing the transmit function.
     //
     // If the transmission can be started, this function needs to
