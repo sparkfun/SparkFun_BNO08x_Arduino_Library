@@ -27,6 +27,10 @@
 #ifndef SH2_H
 #define SH2_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -741,5 +745,9 @@ int sh2_reportWheelEncoder(uint8_t wheelIndex, uint32_t timestamp, int16_t wheel
  * @return SH2_OK (0), on success.  Negative value from sh2_err.h on error.
  */
 int sh2_saveDeadReckoningCalNow(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif
