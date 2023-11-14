@@ -37,14 +37,29 @@
 #include "SparkFun_BNO08x_Arduino_Library.h"  // CTRL+Click here to get the library: http://librarymanager/All#SparkFun_BNO08x
 BNO08x myIMU;
 
+// For reliable interaction with the SHTP bus, we need
+// to use hardware reset control, and monitor the H_INT pin
+// The H_INT pin will go low when its okay to talk on the SHTP bus.
+// Note, these can be other GPIO if you like.
+// Do not define (or set to -1) to not user these features.
+#define BNO08X_INT  4
+//#define BNO08X_INT  -1
+#define BNO08X_RST  22
+//#define BNO08X_RST  -1
+
+#define BNO08X_ADDR 0x4B  // SparkFun BNO08x Breakout (Qwiic) defaults to 0x4B
+//#define BNO08X_ADDR 0x4A // Alternate address if ADR jumper is closed
+
 void setup() {
+  while(!Serial); // Wait for Serial to become available.
+                  // Necessary for boards with native USB (like the SAMD51 Thing+).
   Serial.begin(115200);
   Serial.println();
   Serial.println("BNO08x Read Example");
 
   Wire.begin();
 
-  if (myIMU.begin() == false) {
+  if (myIMU.begin(BNO08X_ADDR, Wire, BNO08X_INT, BNO08X_RST) == false) {
     Serial.println("BNO08x not detected at default I2C address. Check your jumpers and the hookup guide. Freezing...");
     while (1)
       ;

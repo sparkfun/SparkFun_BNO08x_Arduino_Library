@@ -87,7 +87,7 @@ size_t maxBufferSize();
 
 //Initializes the sensor with basic settings using I2C
 //Returns false if sensor is not detected
-boolean BNO08x::begin(uint8_t deviceAddress, TwoWire &wirePort, uint8_t user_INTPin, uint8_t user_RSTPin)
+boolean BNO08x::begin(uint8_t deviceAddress, TwoWire &wirePort, int8_t user_INTPin, int8_t user_RSTPin)
 {
   	_deviceAddress = deviceAddress;
   	_i2cPort = &wirePort;
