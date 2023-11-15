@@ -25,7 +25,15 @@
   https://github.com/adafruit/Adafruit_BusIO
 
   Hardware Connections:
-  Plug the sensor into IoT RedBoard via QWIIC cable.
+  IoT RedBoard --> BNO08x
+  QWIIC --> QWIIC
+  A4  --> INT
+  A5  --> RST
+
+  BNO08x "mode" jumpers set for I2C (default):
+  PSO: OPEN
+  PS1: OPEN
+
   Serial.print it out at 115200 baud to serial monitor.
 
   Feel like supporting our work? Buy a board from SparkFun!
@@ -37,14 +45,14 @@
 #include "SparkFun_BNO08x_Arduino_Library.h"  // CTRL+Click here to get the library: http://librarymanager/All#SparkFun_BNO08x
 BNO08x myIMU;
 
-// For reliable interaction with the SHTP bus, we need
-// to use hardware reset control, and monitor the H_INT pin
+// For the most reliable interaction with the SHTP bus, we need
+// to use hardware reset control, and to monitor the H_INT pin.
 // The H_INT pin will go low when its okay to talk on the SHTP bus.
 // Note, these can be other GPIO if you like.
-// Do not define (or set to -1) to not user these features.
-#define BNO08X_INT  4
+// Define as -1 to disable these features.
+#define BNO08X_INT  A4
 //#define BNO08X_INT  -1
-#define BNO08X_RST  22
+#define BNO08X_RST  A5
 //#define BNO08X_RST  -1
 
 #define BNO08X_ADDR 0x4B  // SparkFun BNO08x Breakout (Qwiic) defaults to 0x4B
