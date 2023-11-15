@@ -51,9 +51,9 @@ BNO08x myIMU;
 //#define BNO08X_ADDR 0x4A // Alternate address if ADR jumper is closed
 
 void setup() {
-  while(!Serial); // Wait for Serial to become available.
-                  // Necessary for boards with native USB (like the SAMD51 Thing+).
   Serial.begin(115200);
+  while(!Serial) delay(10); // Wait for Serial to become available.
+                            // Necessary for boards with native USB (like the SAMD51 Thing+).
   Serial.println();
   Serial.println("BNO08x Read Example");
 
