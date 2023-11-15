@@ -67,6 +67,7 @@ void setup() {
 
   Wire.begin();
 
+  //if (myIMU.begin() == false) {  // Setup without INT/RST control (Not Recommended)
   if (myIMU.begin(BNO08X_ADDR, Wire, BNO08X_INT, BNO08X_RST) == false) {
     Serial.println("BNO08x not detected at default I2C address. Check your jumpers and the hookup guide. Freezing...");
     while (1)

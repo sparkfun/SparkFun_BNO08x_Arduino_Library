@@ -37,8 +37,8 @@
   PICO --> SI
   POCI --> SO
   SCK  --> SCK
-  D17  --> INT
-  D16  --> RST
+  A4  --> INT
+  A5  --> RST
   3V3  --> 3V3
   GND  --> GND
 
@@ -60,11 +60,13 @@ BNO08x myIMU;
 // For SPI, we need some extra pins defined:
 // Note, these can be other GPIO if you like.
 #define BNO08X_CS   25
-#define BNO08X_INT  17
-#define BNO08X_RST  16
+#define BNO08X_INT  A4
+#define BNO08X_RST  A5
 
 void setup() {
   Serial.begin(115200);
+  while(!Serial) delay(10); // Wait for Serial to become available.
+                            // Necessary for boards with native USB (like the SAMD51 Thing+).
   Serial.println();
   Serial.println("BNO08x Read Example");
 

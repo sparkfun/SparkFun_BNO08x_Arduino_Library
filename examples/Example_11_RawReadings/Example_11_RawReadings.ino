@@ -27,7 +27,15 @@
   https://github.com/adafruit/Adafruit_BusIO
 
   Hardware Connections:
-  Plug the sensor into IoT RedBoard via QWIIC cable.
+  IoT RedBoard --> BNO08x
+  QWIIC --> QWIIC
+  A4  --> INT
+  A5  --> RST
+
+  BNO08x "mode" jumpers set for I2C (default):
+  PSO: OPEN
+  PS1: OPEN
+
   Serial.print it out at 115200 baud to serial monitor.
 
   Feel like supporting our work? Buy a board from SparkFun!
@@ -39,6 +47,19 @@
 #include "SparkFun_BNO08x_Arduino_Library.h" // CTRL+Click here to get the library: http://librarymanager/All#SparkFun_BNO08x
 
 BNO08x myIMU;
+
+// For the most reliable interaction with the SHTP bus, we need
+// to use hardware reset control, and to monitor the H_INT pin.
+// The H_INT pin will go low when its okay to talk on the SHTP bus.
+// Note, these can be other GPIO if you like.
+// Define as -1 to disable these features.
+#define BNO08X_INT  A4
+//#define BNO08X_INT  -1
+#define BNO08X_RST  A5
+//#define BNO08X_RST  -1
+
+#define BNO08X_ADDR 0x4B  // SparkFun BNO08x Breakout (Qwiic) defaults to 0x4B
+//#define BNO08X_ADDR 0x4A // Alternate address if ADR jumper is closed
 
 // variables to store all our incoming values
 
@@ -59,12 +80,15 @@ uint16_t mz;
 
 void setup() {
   Serial.begin(115200);
+  while(!Serial) delay(10); // Wait for Serial to become available.
+                            // Necessary for boards with native USB (like the SAMD51 Thing+).
   Serial.println();
   Serial.println("BNO08x Read Example");
 
   Wire.begin();
 
-  if (myIMU.begin() == false) {
+  //if (myIMU.begin() == false) {  // Setup without INT/RST control (Not Recommended)
+  if (myIMU.begin(BNO08X_ADDR, Wire, BNO08X_INT, BNO08X_RST) == false) {
     Serial.println("BNO08x not detected at default I2C address. Check your jumpers and the hookup guide. Freezing...");
     while (1)
       ;
