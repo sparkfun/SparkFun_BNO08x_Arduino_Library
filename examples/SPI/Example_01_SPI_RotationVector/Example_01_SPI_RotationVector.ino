@@ -33,7 +33,7 @@
 
   Hardware Connections:
   IoT RedBoard --> BNO08x
-  D25  --> CS
+  D5  --> CS
   PICO --> SI
   POCI --> SO
   SCK  --> SCK
@@ -59,7 +59,7 @@ BNO08x myIMU;
 
 // For SPI, we need some extra pins defined:
 // Note, these can be other GPIO if you like.
-#define BNO08X_CS   25
+#define BNO08X_CS   5
 #define BNO08X_INT  A4
 #define BNO08X_RST  A5
 
