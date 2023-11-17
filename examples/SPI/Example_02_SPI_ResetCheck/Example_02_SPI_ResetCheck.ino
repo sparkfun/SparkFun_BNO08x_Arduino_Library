@@ -33,12 +33,12 @@
 
   Hardware Connections:
   IoT RedBoard --> BNO08x
-  D25  --> CS
+  D5  --> CS
   PICO --> SI
   POCI --> SO
   SCK  --> SCK
-  D17  --> INT
-  D16  --> RST
+  A4  --> INT
+  A5  --> RST
   3V3  --> 3V3
   GND  --> GND
 
@@ -57,9 +57,9 @@ BNO08x myIMU;
 
 // For SPI, we need some extra pins defined:
 // Note, these can be other GPIO if you like.
-#define BNO08X_CS   25
-#define BNO08X_INT  17
-#define BNO08X_RST  16
+#define BNO08X_CS   5
+#define BNO08X_INT  A4
+#define BNO08X_RST  A5
 
 int cyclecount = 0;
 
@@ -68,6 +68,12 @@ int cyclecount = 0;
 
 void setup() {
   Serial.begin(115200);
+  
+  while(!Serial) delay(10); // Wait for Serial to become available.
+  // Necessary for boards with native USB (like the SAMD51 Thing+).
+  // For a final version of a project that does not need serial debug (or a USB cable plugged in),
+  // Comment out this while loop, or it will prevent the remaining code from running.
+  
   Serial.println();
   Serial.println("BNO08x Read Example");
 

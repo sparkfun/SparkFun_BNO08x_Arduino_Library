@@ -35,6 +35,8 @@
   GND        -->    GND
   SCL1 (D17) -->    SCL
   SDA1 (D25) -->    SDA
+  A4         -->    INT
+  A5         -->    RST  
 
   Note: Make sure to close the ADR jumper on the back of the board as well.
 
@@ -49,6 +51,19 @@
 #include "SparkFun_BNO08x_Arduino_Library.h"  // CTRL+Click here to get the library: http://librarymanager/All#SparkFun_BNO08x
 BNO08x myIMU;
 
+// For the most reliable interaction with the SHTP bus, we need
+// to use hardware reset control, and to monitor the H_INT pin.
+// The H_INT pin will go low when its okay to talk on the SHTP bus.
+// Note, these can be other GPIO if you like.
+// Define as -1 to disable these features.
+#define BNO08X_INT  A4
+//#define BNO08X_INT  -1
+#define BNO08X_RST  A5
+//#define BNO08X_RST  -1
+
+//#define BNO08X_ADDR 0x4B  // SparkFun BNO08x Breakout (Qwiic) defaults to 0x4B
+#define BNO08X_ADDR 0x4A // Alternate address if ADR jumper is closed
+
 // define some pins for our new I2C port, aka "Wire1"
 // on a SparkFun ESP32 IoT REdboard, these can be most pins, except those that
 // are only inputs.
@@ -57,6 +72,12 @@ BNO08x myIMU;
 
 void setup() {
   Serial.begin(115200);
+  
+  while(!Serial) delay(10); // Wait for Serial to become available.
+  // Necessary for boards with native USB (like the SAMD51 Thing+).
+  // For a final version of a project that does not need serial debug (or a USB cable plugged in),
+  // Comment out this while loop, or it will prevent the remaining code from running.
+  
   Serial.println();
   Serial.println("BNO08x Read Example");
 
@@ -69,7 +90,7 @@ void setup() {
   // The first argument of our BNO08x begin() function is the I2C address of the
   // sensor, either 0x4B (default) or 0x4A. The second is the TwoWire I2C port
   // to use. Wire, Wire1, etc.
-  if (myIMU.begin(0x4A, Wire1) == false) {
+  if (myIMU.begin(BNO08X_ADDR, Wire1, BNO08X_INT, BNO08X_RST) == false) {
     Serial.println("BNO08x not detected at default I2C address. Check your jumpers and the hookup guide. Freezing...");
     while (1)
       ;

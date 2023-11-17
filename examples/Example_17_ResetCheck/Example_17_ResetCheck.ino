@@ -32,8 +32,8 @@
   Hardware Connections:
   IoT RedBoard --> BNO08x
   QWIIC --> QWIIC
-  D17  --> INT
-  D16  --> RST
+  A4  --> INT
+  A5  --> RST
 
   BNO08x "mode" jumpers set for I2C (default):
   PSO: OPEN
@@ -48,14 +48,14 @@
 #include "SparkFun_BNO08x_Arduino_Library.h"  // CTRL+Click here to get the library: http://librarymanager/All#SparkFun_BNO08x
 BNO08x myIMU;
 
-// For reliable interaction with the SHTP bus, we need
-// to use hardware reset control, and monitor the H_INT pin
+// For the most reliable interaction with the SHTP bus, we need
+// to use hardware reset control, and to monitor the H_INT pin.
 // The H_INT pin will go low when its okay to talk on the SHTP bus.
 // Note, these can be other GPIO if you like.
-// Do not define (or set to -1) to not user these features.
-#define BNO08X_INT  17
+// Define as -1 to disable these features.
+#define BNO08X_INT  A4
 //#define BNO08X_INT  -1
-#define BNO08X_RST  16
+#define BNO08X_RST  A5
 //#define BNO08X_RST  -1
 
 int cyclecount = 0;
@@ -65,6 +65,12 @@ int cyclecount = 0;
 
 void setup() {
   Serial.begin(115200);
+  
+  while(!Serial) delay(10); // Wait for Serial to become available.
+  // Necessary for boards with native USB (like the SAMD51 Thing+).
+  // For a final version of a project that does not need serial debug (or a USB cable plugged in),
+  // Comment out this while loop, or it will prevent the remaining code from running.
+  
   Serial.println();
   Serial.println("BNO08x Read Example");
 
