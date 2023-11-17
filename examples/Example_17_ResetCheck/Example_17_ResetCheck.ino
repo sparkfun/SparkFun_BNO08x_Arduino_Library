@@ -65,8 +65,12 @@ int cyclecount = 0;
 
 void setup() {
   Serial.begin(115200);
+  
   while(!Serial) delay(10); // Wait for Serial to become available.
-                            // Necessary for boards with native USB (like the SAMD51 Thing+).
+  // Necessary for boards with native USB (like the SAMD51 Thing+).
+  // For a final version of a project that does not need serial debug (or a USB cable plugged in),
+  // Comment out this while loop, or it will prevent the remaining code from running.
+  
   Serial.println();
   Serial.println("BNO08x Read Example");
 
