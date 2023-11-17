@@ -171,6 +171,7 @@ public:
 	float qToFloat(int16_t fixedPointValue, uint8_t qPoint); //Given a Q value, converts fixed point floating to regular floating point number
 
 	bool enableRotationVector(uint16_t timeBetweenReports = 10);
+	bool enableGeomagneticRotationVector(uint16_t timeBetweenReports = 10);
 	bool enableGameRotationVector(uint16_t timeBetweenReports = 10);
 	bool enableARVRStabilizedRotationVector(uint16_t timeBetweenReports);
 	bool enableARVRStabilizedGameRotationVector(uint16_t timeBetweenReports);
