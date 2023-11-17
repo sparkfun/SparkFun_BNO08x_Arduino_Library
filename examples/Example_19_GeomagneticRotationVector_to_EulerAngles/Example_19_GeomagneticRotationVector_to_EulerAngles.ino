@@ -2,10 +2,17 @@
 /*
   Using the BNO08x IMU
 
-  Example : Euler Angles
+  Example : Geomagnetic Rotation Vector to Euler Angles
+
+  This example was initially created by github user SFSailor November 2023
+  https://github.com/sparkfun/SparkFun_BNO08x_Arduino_Library/issues/10
+  https://forum.sparkfun.com/viewtopic.php?f=83&t=60523&p=245145#p245145
+
+  Modified from original example of Euler Angles
   By: Paul Clark
   Date: April 28th, 2020
 
+  Using the Geomagnetic Rotation vectors,
   This example shows how to output the Euler angles: roll, pitch and yaw.
   The yaw (compass heading) is tilt-compensated, which is nice.
   https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
@@ -97,11 +104,11 @@ void setup() {
 // Here is where you define the sensor outputs you want to receive
 void setReports(void) {
   Serial.println("Setting desired reports");
-  if (myIMU.enableRotationVector() == true) {
-    Serial.println(F("Rotation vector enabled"));
+  if (myIMU.enableGeomagneticRotationVector() == true) {
+    Serial.println(F("Geomagnetic Rotation vector enabled"));
     Serial.println(F("Output in form roll, pitch, yaw"));
   } else {
-    Serial.println("Could not enable rotation vector");
+    Serial.println("Could not enable geomagnetic rotation vector");
   }
 }
 
@@ -117,7 +124,7 @@ void loop() {
   if (myIMU.getSensorEvent() == true) {
 
     // is it the correct sensor data we want?
-    if (myIMU.getSensorEventID() == SENSOR_REPORTID_ROTATION_VECTOR) {
+    if (myIMU.getSensorEventID() == SENSOR_REPORTID_GEOMAGNETIC_ROTATION_VECTOR) {
 
     float roll = (myIMU.getRoll()) * 180.0 / PI; // Convert roll to degrees
     float pitch = (myIMU.getPitch()) * 180.0 / PI; // Convert pitch to degrees
