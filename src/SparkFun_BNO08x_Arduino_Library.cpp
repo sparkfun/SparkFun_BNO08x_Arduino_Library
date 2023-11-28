@@ -1373,7 +1373,7 @@ static void sensorHandler(void *cookie, sh2_SensorEvent_t *event) {
 
   rc = sh2_decodeSensorEvent(_sensor_value, event);
   if (rc != SH2_OK) {
-    Serial.println("BNO08x - Error decoding sensor event");
+    //Serial.println("BNO08x - Error decoding sensor event");
     _sensor_value->timestamp = 0;
     return;
   }
