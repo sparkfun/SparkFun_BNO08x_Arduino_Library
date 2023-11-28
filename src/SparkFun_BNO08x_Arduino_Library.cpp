@@ -42,7 +42,7 @@
 
 #include "SparkFun_BNO08x_Arduino_Library.h"
 
-int8_t _int_pin, _reset_pin;
+int8_t _int_pin = -1, _reset_pin = -1;
 static TwoWire *_i2cPort = NULL;		//The generic connection to user's chosen I2C hardware
 static SPIClass *_spiPort = NULL;  		//The generic connection to user's chosen SPI hardware
 static uint8_t _deviceAddress = BNO08x_DEFAULT_ADDRESS; //Keeps track of I2C address. setI2CAddress changes this.
