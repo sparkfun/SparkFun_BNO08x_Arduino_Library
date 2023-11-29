@@ -78,8 +78,6 @@ int16_t mx;
 int16_t my;
 int16_t mz;
 
-unsigned long previousMicros = 0;
-
 unsigned long previousDebugMillis = 0;
 #define DEBUG_INTERVAL_MILLISECONDS 30
 
@@ -157,8 +155,6 @@ void setReports(void) {
 }
 
 void loop() {
-  unsigned long currentMicros = micros();
-
   delayMicroseconds(10);
 
   if (myIMU.wasReset()) {
