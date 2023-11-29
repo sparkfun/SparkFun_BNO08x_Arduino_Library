@@ -64,19 +64,22 @@ BNO08x myIMU;
 // variables to store all our incoming values
 
 // raw accel
-uint16_t x;
-uint16_t y;
-uint16_t z;
+int16_t x;
+int16_t y;
+int16_t z;
 
 // raw gyros
-uint16_t gx;
-uint16_t gy;
-uint16_t gz;
+int16_t gx;
+int16_t gy;
+int16_t gz;
 
 // raw mags
-uint16_t mx;
-uint16_t my;
-uint16_t mz;
+int16_t mx;
+int16_t my;
+int16_t mz;
+
+unsigned long previousDebugMillis = 0;
+#define DEBUG_INTERVAL_MILLISECONDS 30
 
 void setup() {
   Serial.begin(115200);
@@ -99,7 +102,7 @@ void setup() {
   }
   Serial.println("BNO08x found!");
 
-  Wire.setClock(400000); //Increase I2C data rate to 400kHz
+  //Wire.setClock(400000); //Increase I2C data rate to 400kHz
 
   setReports();
 
@@ -111,37 +114,37 @@ void setup() {
 void setReports(void) {
   Serial.println("Setting desired reports");
 
-  if (myIMU.enableAccelerometer() == true) {
+  if (myIMU.enableAccelerometer(1) == true) {
     Serial.println(F("Accelerometer enabled"));
   } else {
     Serial.println("Could not enable accelerometer");
   }
 
-  if (myIMU.enableRawAccelerometer() == true) {
+  if (myIMU.enableRawAccelerometer(1) == true) {
     Serial.println(F("Raw Accelerometer enabled"));
   } else {
     Serial.println("Could not enable raw accelerometer");
   }
 
-  if (myIMU.enableGyro() == true) {
+  if (myIMU.enableGyro(1) == true) {
     Serial.println(F("Gyro enabled"));
   } else {
     Serial.println("Could not enable gyro");
   }
 
-  if (myIMU.enableRawGyro() == true) {
+  if (myIMU.enableRawGyro(1) == true) {
     Serial.println(F("Raw Gyro enabled"));
   } else {
     Serial.println("Could not enable raw gyro");
   }
 
-  if (myIMU.enableMagnetometer() == true) {
+  if (myIMU.enableMagnetometer(1) == true) {
     Serial.println(F("Magnetometer enabled"));
   } else {
     Serial.println("Could not enable Magnetometer");
   }
 
-  if (myIMU.enableRawMagnetometer() == true) {
+  if (myIMU.enableRawMagnetometer(1) == true) {
     Serial.println(F("Raw Magnetometer enabled"));
   } else {
     Serial.println("Could not enable Raw Magnetometer");
@@ -152,7 +155,7 @@ void setReports(void) {
 }
 
 void loop() {
-  delay(10);
+  delayMicroseconds(10);
 
   if (myIMU.wasReset()) {
     Serial.print("sensor was reset ");
@@ -188,11 +191,19 @@ void loop() {
       break;
     }
 
-    // Only print data to terminal if one of the report IDs we want came
-    // in on the bus
-    if( (reportID == SENSOR_REPORTID_RAW_ACCELEROMETER) ||
-        (reportID == SENSOR_REPORTID_RAW_GYROSCOPE) ||
-        (reportID == SENSOR_REPORTID_RAW_MAGNETOMETER))
+    // Only print data to the terminal at a user defined interval
+    // Each data type (accel or gyro or mag) is reported from the
+    // BNO086 as separate messages.
+    // To allow for all these separate messages to arrive, and thus
+    // have updated data on all axis/types, 
+    // The report intervals for each datatype must be much faster
+    // than our debug interval.
+
+    // time since last debug data printed to terminal
+    int timeSinceLastSerialPrint = (millis() - previousDebugMillis);
+
+    // Only print data to the terminal at a user deficed interval
+    if(timeSinceLastSerialPrint > DEBUG_INTERVAL_MILLISECONDS)
     {
       Serial.print(x);
       Serial.print("\t");
@@ -215,7 +226,12 @@ void loop() {
       Serial.print(mz);
       Serial.print("\t");
 
+      Serial.print(timeSinceLastSerialPrint);
+
       Serial.println();
+
+      previousDebugMillis = millis();
+
     }
   }
 }
