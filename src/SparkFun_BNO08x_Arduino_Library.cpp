@@ -328,6 +328,30 @@ uint8_t BNO08x::getQuatAccuracy()
 	return _sensor_value->status;
 }
 
+//Return the game rotation vector quaternion I
+float BNO08x::getGameQuatI()
+{
+	return _sensor_value->un.gameRotationVector.i;
+}
+
+//Return the game rotation vector quaternion J
+float BNO08x::getGameQuatJ()
+{
+	return _sensor_value->un.gameRotationVector.j;
+}
+
+//Return the game rotation vector quaternion K
+float BNO08x::getGameQuatK()
+{
+	return _sensor_value->un.gameRotationVector.k;
+}
+
+//Return the game rotation vector quaternion Real
+float BNO08x::getGameQuatReal()
+{
+	return _sensor_value->un.gameRotationVector.real;
+}
+
 //Gets the full acceleration
 //x,y,z output floats
 void BNO08x::getAccel(float &x, float &y, float &z, uint8_t &accuracy)
@@ -949,11 +973,34 @@ bool BNO08x::enableActivityClassifier(uint16_t timeBetweenReports, uint32_t acti
 // 	sendCalibrateCommand(CALIBRATE_PLANAR_ACCEL);
 // }
 
-// //See 2.2 of the Calibration Procedure document 1000-4044
-// void BNO08x::calibrateAll()
-// {
-// 	sendCalibrateCommand(CALIBRATE_ACCEL_GYRO_MAG);
-// }
+//See 2.2 of the Calibration Procedure document 1000-4044
+bool BNO08x::calibrateAll()
+{
+  int status;
+  
+  Serial.print("Attempting sh2_setCalConfig...");
+  //int status = sh2_setCalConfig(SH2_CAL_ACCEL);
+  status = sh2_setCalConfig(SH2_CAL_ACCEL || SH2_CAL_GYRO || SH2_CAL_MAG);
+
+  if (status != SH2_OK) {
+    return false;
+  }
+  //delay(100); // may not be necessary
+
+  Serial.println("complete.");
+
+  Serial.print("Attempting sh2_startCal...");
+  
+  status = sh2_startCal(1000); // argument is report interval in uS
+
+  Serial.println("complete.");
+
+  if (status != SH2_OK) {
+    return false;
+  }
+
+  return true;	
+}
 
 // void BNO08x::endCalibration()
 // {
@@ -1068,26 +1115,16 @@ bool BNO08x::clearTare()
 // 	sendCommand(COMMAND_ME_CALIBRATE);
 // }
 
-// //This tells the BNO08x to save the Dynamic Calibration Data (DCD) to flash
-// //See page 49 of reference manual and the 1000-4044 calibration doc
-// void BNO08x::saveCalibration()
-// {
-// 	/*shtpData[3] = 0; //P0 - Reserved
-// 	shtpData[4] = 0; //P1 - Reserved
-// 	shtpData[5] = 0; //P2 - Reserved
-// 	shtpData[6] = 0; //P3 - Reserved
-// 	shtpData[7] = 0; //P4 - Reserved
-// 	shtpData[8] = 0; //P5 - Reserved
-// 	shtpData[9] = 0; //P6 - Reserved
-// 	shtpData[10] = 0; //P7 - Reserved
-// 	shtpData[11] = 0; //P8 - Reserved*/
-
-// 	for (uint8_t x = 3; x < 12; x++) //Clear this section of the shtpData array
-// 		shtpData[x] = 0;
-
-// 	//Using this shtpData packet, send a command
-// 	sendCommand(COMMAND_DCD); //Save DCD command
-// }
+//This tells the BNO08x to save the Dynamic Calibration Data (DCD) to flash
+//See page 49 of reference manual and the 1000-4044 calibration doc
+bool BNO08x::saveCalibration()
+{
+  int status = sh2_saveDcdNow();
+  if (status != SH2_OK) {
+    return false;
+  }
+  return true;	
+}
 
 /*!  @brief Initializer for post i2c/spi init
  *   @param sensor_id Optional unique ID for the sensor set

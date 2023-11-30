@@ -198,6 +198,11 @@ public:
 	float getQuatRadianAccuracy();
 	uint8_t getQuatAccuracy();
 
+	float getGameQuatI();
+	float getGameQuatJ();
+	float getGameQuatK();
+	float getGameQuatReal();	
+
 	void getAccel(float &x, float &y, float &z, uint8_t &accuracy);
 	float getAccelX();
 	float getAccelY();
@@ -249,9 +254,9 @@ public:
 	// void calibrateGyro();
 	// void calibrateMagnetometer();
 	// void calibratePlanarAccelerometer();
-	// void calibrateAll();
+	bool calibrateAll();
 	// void endCalibration();
-	// void saveCalibration();
+	bool saveCalibration();
 	// void requestCalibrationStatus(); //Sends command to get status
 	// boolean calibrationComplete();   //Checks ME Cal response for byte 5, R0 - Status
 
