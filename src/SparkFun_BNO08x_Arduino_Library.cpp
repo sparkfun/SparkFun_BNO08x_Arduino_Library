@@ -995,6 +995,18 @@ bool BNO08x::clearTare()
   return true;
 }
 
+bool BNO08x::setReorientation(sh2_Quaternion_t *orientation)
+{
+  int status = sh2_setReorientation(orientation);
+
+  if (status != SH2_OK)
+  {
+    return false;
+  }
+
+  return true;
+}
+
 // //This tells the BNO08x to begin calibrating
 // //See page 50 of reference manual and the 1000-4044 calibration doc
 // void BNO08x::sendCalibrateCommand(uint8_t thingToCalibrate)
