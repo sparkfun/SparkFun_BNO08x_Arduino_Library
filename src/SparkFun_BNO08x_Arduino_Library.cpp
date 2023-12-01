@@ -949,51 +949,11 @@ bool BNO08x::enableActivityClassifier(uint16_t timeBetweenReports, uint32_t acti
 	return enableReport(SENSOR_REPORTID_PERSONAL_ACTIVITY_CLASSIFIER, timeBetweenReports, activitiesToEnable);
 }
 
-// //Sends the commands to begin calibration of the accelerometer
-// void BNO08x::calibrateAccelerometer()
-// {
-// 	sendCalibrateCommand(CALIBRATE_ACCEL);
-// }
-
-// //Sends the commands to begin calibration of the gyro
-// void BNO08x::calibrateGyro()
-// {
-// 	sendCalibrateCommand(CALIBRATE_GYRO);
-// }
-
-// //Sends the commands to begin calibration of the magnetometer
-// void BNO08x::calibrateMagnetometer()
-// {
-// 	sendCalibrateCommand(CALIBRATE_MAG);
-// }
-
-// //Sends the commands to begin calibration of the planar accelerometer
-// void BNO08x::calibratePlanarAccelerometer()
-// {
-// 	sendCalibrateCommand(CALIBRATE_PLANAR_ACCEL);
-// }
-
-//See 2.2 of the Calibration Procedure document 1000-4044
-bool BNO08x::calibrateAll()
+// See 2.2 of the Calibration Procedure document 1000-4044
+// Set the desired sensors to have active dynamic calibration
+bool BNO08x::setCalibrationConfig(uint8_t sensors)
 {
-  int status;
-  
-  Serial.print("Attempting sh2_setCalConfig...");
-  //int status = sh2_setCalConfig(SH2_CAL_ACCEL);
-  status = sh2_setCalConfig(SH2_CAL_ACCEL || SH2_CAL_GYRO || SH2_CAL_MAG);
-
-  if (status != SH2_OK) {
-    return false;
-  }
-  //delay(100); // may not be necessary
-
-  Serial.println("complete.");
-
-  Serial.print("Attempting sh2_startCal...");
-  
-  status = sh2_startCal(1000); // argument is report interval in uS
-
-  Serial.println("complete.");
+  int status = sh2_setCalConfig(sensors);
 
   if (status != SH2_OK) {
     return false;
@@ -1001,20 +961,6 @@ bool BNO08x::calibrateAll()
 
   return true;	
 }
-
-// void BNO08x::endCalibration()
-// {
-// 	sendCalibrateCommand(CALIBRATE_STOP); //Disables all calibrations
-// }
-
-// //See page 51 of reference manual - ME Calibration Response
-// //Byte 5 is parsed during the readPacket and stored in calibrationStatus
-// boolean BNO08x::calibrationComplete()
-// {
-// 	if (calibrationStatus == 0)
-// 		return (true);
-// 	return (false);
-// }
 
 bool BNO08x::tareNow(bool zAxis, sh2_TareBasis_t basis)
 {

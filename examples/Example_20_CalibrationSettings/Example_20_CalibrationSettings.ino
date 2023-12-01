@@ -1,12 +1,26 @@
 /*
   Using the BNO08x IMU
 
-  This example shows how to calibrate the sensor. See document 1000-4044.
-  You move the sensor into a sequence of positions, then send it an "S" to save.
+  This example shows how to adjust settings of the dynamic calibration of the 
+  BNO08x. 
+  
+  The BNO08x allows you to turn on/off dynamic calibration for each sensor in 
+  the IMU (accel, gyro, or mag).
 
-  While Calibration is in progress, it will output the x/y/z/accuracy of the mag
-  and the i/j/k/real parts of the game rotation vector.
+  Please refer to the BNO08X data sheet Section 3 (page 37)
+  https://docs.sparkfun.com/SparkFun_VR_IMU_Breakout_BNO086_QWIIC/assets/component_documentation/BNO080_085-Datasheet_v1.16.pdf
+
+  Note, by default, dynamic calibration is enabled for accel and mag.
+  Some special use cases may require turning on all or any special combo of sensor 
+  dynamic calibration.
+  
+  After the calibration settings are set, this example will output the 
+  x/y/z/accuracy of the mag and the i/j/k/real parts of the game rotation vector.
   https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
+
+  Note, the "simple calibration" feature, sh2_startCal(), is not available on 
+  the BNO08x. See this issue for more info:
+  https://github.com/ceva-dsp/sh2/issues/11
 
   By: Nathan Seidle
   SparkFun Electronics
@@ -102,8 +116,11 @@ void setup() {
 
   // Wire.setClock(400000); //Increase I2C data rate to 400kHz
 
-  //Enable dynamic calibration for accel, gyro, and mag
-  if (myIMU.calibrateAll() == true) {
+  // Enable dynamic calibration for desired sensors (accel, gyro, and mag)
+  // uncomment/comment out as needed to try various options
+  if (myIMU.setCalibrationConfig(SH2_CAL_ACCEL || SH2_CAL_GYRO || SH2_CAL_MAG) == true) { // all three sensors
+  //if (myIMU.setCalibrationConfig(SH2_CAL_ACCEL || SH2_CAL_MAG) == true) { // Default settings
+  //if (myIMU.setCalibrationConfig(SH2_CAL_ACCEL) == true) { // only accel
     Serial.println(F("Calibration Command Sent Successfully"));
   } else {
     Serial.println("Could not send Calibration Command. Freezing...");
@@ -204,51 +221,15 @@ void loop() {
 
     if(incoming == 's')
     {
-      //Saves the current dynamic calibration data (DCD) to memory
+      // Saves the current dynamic calibration data (DCD) to memory
+      // Note, The BNO08X stores updated Dynamic Calibration Data (DCD) to RAM 
+      // frequently (every 5 seconds), so this command may not be necessary
+      // depending on your application.
       if (myIMU.saveCalibration() == true) {
         Serial.println(F("Calibration data was saved successfully"));
       } else {
         Serial.println("Save Calibration Failure");
       }
-
-      ////////////////////////////////////
-      // CODE FROM PREVIOUS BNO080 LIBRARY vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-      // BEGIN ///////////////////////////
-
-      // myIMU.requestCalibrationStatus(); //Sends command to get the latest calibration status
-
-      // //Wait for calibration response, timeout if no response
-      // int counter = 100;
-      // while(1)
-      // {
-      //   if(--counter == 0) break;
-      //   if(myIMU.dataAvailable() == true)
-      //   {
-      //     //The IMU can report many different things. We must wait
-      //     //for the ME Calibration Response Status byte to go to zero
-      //     if(myIMU.calibrationComplete() == true)
-      //     {
-      //       Serial.println("Calibration data successfully stored");
-      //       delay(1000);
-      //       break;
-      //     }
-      //   }
-
-      //   delay(1);
-      // }
-      // if(counter == 0)
-      // {
-      //   Serial.println("Calibration data failed to store. Please try again.");
-      // }
-
-      //myIMU.endCalibration(); //Turns off all calibration
-      //In general, calibration should be left on at all times. The BNO080
-      //auto-calibrates and auto-records cal data roughly every 5 minutes
-
-      ////////////////////////////////////
-      // CODE FROM PREVIOUS BNO080 LIBRARY ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      // END /////////////////////////////
-
     }
   }
 }

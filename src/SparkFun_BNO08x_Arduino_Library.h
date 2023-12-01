@@ -250,15 +250,8 @@ public:
 	float getGravityZ();
 	uint8_t getGravityAccuracy();
 
-	// void calibrateAccelerometer();
-	// void calibrateGyro();
-	// void calibrateMagnetometer();
-	// void calibratePlanarAccelerometer();
-	bool calibrateAll();
-	// void endCalibration();
+	bool setCalibrationConfig(uint8_t sensors);
 	bool saveCalibration();
-	// void requestCalibrationStatus(); //Sends command to get status
-	// boolean calibrationComplete();   //Checks ME Cal response for byte 5, R0 - Status
 
 	bool tareNow(bool zAxis=false, sh2_TareBasis_t basis=SH2_TARE_BASIS_ROTATION_VECTOR);
 	bool saveTare();
