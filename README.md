@@ -15,8 +15,13 @@ In addition the BNO08x IMU provides a built-in step counter, tap detector, activ
 
 This Arduino Library was built off the [original library](https://github.com/sparkfun/SparkFun_BNO080_Arduino_Library) written by Nathan Seidle ([SparkFun](http://www.sparkfun.com)).
 
-Thanks to all those who have helped improve the original library:
+Thanks to all those who have helped improve this library!
 
+This BNO086 Library - CEVA-DSP Sh2 Driver-based improvements:
+* LazaroFilm for adding setReorientation() [PR15](https://github.com/sparkfun/SparkFun_BNO08x_Arduino_Library/pull/15)
+* rah2501 for fixing an INT/RST pin bug [PR13](https://github.com/sparkfun/SparkFun_BNO08x_Arduino_Library/pull/13)
+
+Original BNO080 Library improvements:
 * blendmaster for adding [Linear Accel report](https://github.com/sparkfun/SparkFun_BNO080_Arduino_Library/pull/4)
 * per1234 for fixing our [keywords file](https://github.com/sparkfun/SparkFun_BNO080_Arduino_Library/pull/12)
 * fm4dd for typo - [PR 19](https://github.com/sparkfun/SparkFun_BNO080_Arduino_Library/pull/19)

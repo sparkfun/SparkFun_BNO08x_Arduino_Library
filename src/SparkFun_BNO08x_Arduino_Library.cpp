@@ -995,6 +995,13 @@ bool BNO08x::clearTare()
   return true;
 }
 
+// setReorientation()
+// Contributed by githhub user LazaroFilm (Victor Lazaro) Nov 2023.
+// https://github.com/sparkfun/SparkFun_BNO08x_Arduino_Library/pull/15
+// This function takes a quaternion and applies it to the rotation vector output as an offset.
+// This can be used in conjunction to the tare functions to offset the output manually.
+// To reset, simply send a zeroed out quaternion to the function.
+
 bool BNO08x::setReorientation(sh2_Quaternion_t *orientation)
 {
   int status = sh2_setReorientation(orientation);
