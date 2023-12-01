@@ -100,15 +100,8 @@ getLinAccelY	KEYWORD2
 getLinAccelZ	KEYWORD2
 getLinAccelAccuracy	KEYWORD2
 
-calibrateAccelerometer	KEYWORD2
-calibrateGyro	KEYWORD2
-calibrateMagnetometer	KEYWORD2
-calibratePlanarAccelerometer	KEYWORD2
-calibrateAll	KEYWORD2
-endCalibration	KEYWORD2
+setCalibrationConfig	KEYWORD2
 saveCalibration	KEYWORD2
-requestCalibrationStatus	KEYWORD2
-calibrationComplete	KEYWORD2
 
 tareNow	KEYWORD2
 saveTare	KEYWORD2
