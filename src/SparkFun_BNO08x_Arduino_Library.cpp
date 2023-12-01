@@ -796,6 +796,13 @@ bool BNO08x::enableRotationVector(uint16_t timeBetweenReports)
 	return enableReport(SH2_ROTATION_VECTOR, timeBetweenReports);
 }
 
+//Sends the packet to enable the geomagnetic rotation vector
+bool BNO08x::enableGeomagneticRotationVector(uint16_t timeBetweenReports)
+{
+	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
+	return enableReport(SH2_GEOMAGNETIC_ROTATION_VECTOR, timeBetweenReports);
+}
+
 //Sends the packet to enable the ar/vr stabilized rotation vector
 bool BNO08x::enableARVRStabilizedRotationVector(uint16_t timeBetweenReports)
 {

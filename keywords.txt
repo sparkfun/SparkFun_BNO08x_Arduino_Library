@@ -26,6 +26,7 @@ modeSleep	KEYWORD2
 qToFloat	KEYWORD2
 
 enableRotationVector	KEYWORD2
+enableGeomagneticRotationVector	KEYWORD2
 enableGameRotationVector	KEYWORD2
 enableARVRStabilizedRotationVector	KEYWORD2
 enableARVRStabilizedGameRotationVector	KEYWORD2
