@@ -198,6 +198,11 @@ public:
 	float getQuatRadianAccuracy();
 	uint8_t getQuatAccuracy();
 
+	float getGameQuatI();
+	float getGameQuatJ();
+	float getGameQuatK();
+	float getGameQuatReal();	
+
 	void getAccel(float &x, float &y, float &z, uint8_t &accuracy);
 	float getAccelX();
 	float getAccelY();
@@ -245,15 +250,8 @@ public:
 	float getGravityZ();
 	uint8_t getGravityAccuracy();
 
-	// void calibrateAccelerometer();
-	// void calibrateGyro();
-	// void calibrateMagnetometer();
-	// void calibratePlanarAccelerometer();
-	// void calibrateAll();
-	// void endCalibration();
-	// void saveCalibration();
-	// void requestCalibrationStatus(); //Sends command to get status
-	// boolean calibrationComplete();   //Checks ME Cal response for byte 5, R0 - Status
+	bool setCalibrationConfig(uint8_t sensors);
+	bool saveCalibration();
 
 	bool tareNow(bool zAxis=false, sh2_TareBasis_t basis=SH2_TARE_BASIS_ROTATION_VECTOR);
 	bool saveTare();

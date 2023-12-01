@@ -328,6 +328,30 @@ uint8_t BNO08x::getQuatAccuracy()
 	return _sensor_value->status;
 }
 
+//Return the game rotation vector quaternion I
+float BNO08x::getGameQuatI()
+{
+	return _sensor_value->un.gameRotationVector.i;
+}
+
+//Return the game rotation vector quaternion J
+float BNO08x::getGameQuatJ()
+{
+	return _sensor_value->un.gameRotationVector.j;
+}
+
+//Return the game rotation vector quaternion K
+float BNO08x::getGameQuatK()
+{
+	return _sensor_value->un.gameRotationVector.k;
+}
+
+//Return the game rotation vector quaternion Real
+float BNO08x::getGameQuatReal()
+{
+	return _sensor_value->un.gameRotationVector.real;
+}
+
 //Gets the full acceleration
 //x,y,z output floats
 void BNO08x::getAccel(float &x, float &y, float &z, uint8_t &accuracy)
@@ -925,49 +949,18 @@ bool BNO08x::enableActivityClassifier(uint16_t timeBetweenReports, uint32_t acti
 	return enableReport(SENSOR_REPORTID_PERSONAL_ACTIVITY_CLASSIFIER, timeBetweenReports, activitiesToEnable);
 }
 
-// //Sends the commands to begin calibration of the accelerometer
-// void BNO08x::calibrateAccelerometer()
-// {
-// 	sendCalibrateCommand(CALIBRATE_ACCEL);
-// }
+// See 2.2 of the Calibration Procedure document 1000-4044
+// Set the desired sensors to have active dynamic calibration
+bool BNO08x::setCalibrationConfig(uint8_t sensors)
+{
+  int status = sh2_setCalConfig(sensors);
 
-// //Sends the commands to begin calibration of the gyro
-// void BNO08x::calibrateGyro()
-// {
-// 	sendCalibrateCommand(CALIBRATE_GYRO);
-// }
+  if (status != SH2_OK) {
+    return false;
+  }
 
-// //Sends the commands to begin calibration of the magnetometer
-// void BNO08x::calibrateMagnetometer()
-// {
-// 	sendCalibrateCommand(CALIBRATE_MAG);
-// }
-
-// //Sends the commands to begin calibration of the planar accelerometer
-// void BNO08x::calibratePlanarAccelerometer()
-// {
-// 	sendCalibrateCommand(CALIBRATE_PLANAR_ACCEL);
-// }
-
-// //See 2.2 of the Calibration Procedure document 1000-4044
-// void BNO08x::calibrateAll()
-// {
-// 	sendCalibrateCommand(CALIBRATE_ACCEL_GYRO_MAG);
-// }
-
-// void BNO08x::endCalibration()
-// {
-// 	sendCalibrateCommand(CALIBRATE_STOP); //Disables all calibrations
-// }
-
-// //See page 51 of reference manual - ME Calibration Response
-// //Byte 5 is parsed during the readPacket and stored in calibrationStatus
-// boolean BNO08x::calibrationComplete()
-// {
-// 	if (calibrationStatus == 0)
-// 		return (true);
-// 	return (false);
-// }
+  return true;	
+}
 
 bool BNO08x::tareNow(bool zAxis, sh2_TareBasis_t basis)
 {
@@ -1068,26 +1061,16 @@ bool BNO08x::clearTare()
 // 	sendCommand(COMMAND_ME_CALIBRATE);
 // }
 
-// //This tells the BNO08x to save the Dynamic Calibration Data (DCD) to flash
-// //See page 49 of reference manual and the 1000-4044 calibration doc
-// void BNO08x::saveCalibration()
-// {
-// 	/*shtpData[3] = 0; //P0 - Reserved
-// 	shtpData[4] = 0; //P1 - Reserved
-// 	shtpData[5] = 0; //P2 - Reserved
-// 	shtpData[6] = 0; //P3 - Reserved
-// 	shtpData[7] = 0; //P4 - Reserved
-// 	shtpData[8] = 0; //P5 - Reserved
-// 	shtpData[9] = 0; //P6 - Reserved
-// 	shtpData[10] = 0; //P7 - Reserved
-// 	shtpData[11] = 0; //P8 - Reserved*/
-
-// 	for (uint8_t x = 3; x < 12; x++) //Clear this section of the shtpData array
-// 		shtpData[x] = 0;
-
-// 	//Using this shtpData packet, send a command
-// 	sendCommand(COMMAND_DCD); //Save DCD command
-// }
+//This tells the BNO08x to save the Dynamic Calibration Data (DCD) to flash
+//See page 49 of reference manual and the 1000-4044 calibration doc
+bool BNO08x::saveCalibration()
+{
+  int status = sh2_saveDcdNow();
+  if (status != SH2_OK) {
+    return false;
+  }
+  return true;	
+}
 
 /*!  @brief Initializer for post i2c/spi init
  *   @param sensor_id Optional unique ID for the sensor set
