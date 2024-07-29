@@ -58,6 +58,13 @@ BNO08x myIMU;
 #define BNO08X_INT  A4
 #define BNO08X_RST  A5
 
+// If using the MicroMod Machine Learning Carrier Board, use these pins:
+// for more info see https://github.com/sparkfun/SparkFun_BNO08x_Arduino_Library/issues/19
+//#define BNO08X_CS   PWM0
+//#define BNO08X_INT  D0 // Note, D0 is also the CS pin for the camera, so you'll need to change that if you're using both.
+// a good alternative for D0 is PWM1, (A0 and A1 are only inputs on the carrier board).
+//#define BNO08X_RST  D1
+
 unsigned long lastMillis = 0;  // Keep track of time
 bool lastPowerState = true;    // Toggle between "On" and "Sleep"
 
