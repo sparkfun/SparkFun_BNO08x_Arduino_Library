@@ -118,7 +118,7 @@ void setup() {
 
   // Enable dynamic calibration for desired sensors (accel, gyro, and mag)
   // uncomment/comment out as needed to try various options
-  if (myIMU.setCalibrationConfig(SH2_CAL_ACCEL || SH2_CAL_GYRO || SH2_CAL_MAG) == true) { // all three sensors
+  if (myIMU.setCalibrationConfig(SH2_CAL_ACCEL | SH2_CAL_GYRO | SH2_CAL_MAG) == true) { // all three sensors
   //if (myIMU.setCalibrationConfig(SH2_CAL_ACCEL || SH2_CAL_MAG) == true) { // Default settings
   //if (myIMU.setCalibrationConfig(SH2_CAL_ACCEL) == true) { // only accel
     Serial.println(F("Calibration Command Sent Successfully"));
