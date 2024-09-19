@@ -1,5 +1,6 @@
 SparkFun VR IMU BNO08X Arduino Library
 ===========================================================
+Added shaker detection function to the main .cpp and .h file
 
 [![SparkFun VR IMU Breakout - BNO086 (Qwiic)](https://cdn.sparkfun.com/r/600-600/assets/parts/2/3/0/2/7/22857-SEN_SparkFun_VR_IMU_Breakout-BNO086_Qwiic-_01.jpg)](https://www.sparkfun.com/products/22857)
 

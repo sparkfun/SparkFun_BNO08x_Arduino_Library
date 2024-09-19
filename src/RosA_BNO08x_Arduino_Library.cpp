@@ -40,7 +40,7 @@
   Thank you Adafruit and your developers for all your hard work put into your Library!
 */
 
-#include "SparkFun_BNO08x_Arduino_Library.h"
+#include "RosA_BNO08x_Arduino_Library.h"
 
 int8_t _int_pin = -1, _reset_pin = -1;
 static TwoWire *_i2cPort = NULL;		//The generic connection to user's chosen I2C hardware
@@ -616,10 +616,17 @@ float BNO08x::getGyroIntegratedRVangVelZ()
 //Return the tap detector
 uint8_t BNO08x::getTapDetector()
 {
-	uint8_t previousTapDetector = tapDetector;
-	tapDetector = 0; //Reset so user code sees exactly one tap
-	return (previousTapDetector);
+//	uint8_t previousTapDetector = tapDetector;
+//	tapDetector = 0; //Reset so user code sees exactly one tap
+//	return (previousTapDetector);
+	return _sensor_value->un.tapDetector.flags;
 }
+//Return shake detector
+uint16_t BNO08x::getShakeDetector()
+{
+	return _sensor_value->un.shakeDetector.shake;
+}
+
 
 //Return the step count
 uint16_t BNO08x::getStepCount()
@@ -902,6 +909,13 @@ bool BNO08x::enableTapDetector(uint16_t timeBetweenReports)
 {
 	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
 	return enableReport(SENSOR_REPORTID_TAP_DETECTOR, timeBetweenReports);		
+}
+
+//Sends the packet to enable the shake detector
+bool BNO08x::enableShakeDetector(uint16_t timeBetweenReports)
+{
+	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
+	return enableReport(SENSOR_REPORTID_SHAKE_DETECTOR, timeBetweenReports);		
 }
 
 //Sends the packet to enable the step counter

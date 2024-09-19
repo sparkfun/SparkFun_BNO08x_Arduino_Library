@@ -105,6 +105,7 @@
 #define SENSOR_REPORTID_RAW_ACCELEROMETER 0x14
 #define SENSOR_REPORTID_RAW_GYROSCOPE 0x15
 #define SENSOR_REPORTID_RAW_MAGNETOMETER 0x16
+#define SENSOR_REPORTID_SHAKE_DETECTOR 0x19
 #define SENSOR_REPORTID_PERSONAL_ACTIVITY_CLASSIFIER SH2_PERSONAL_ACTIVITY_CLASSIFIER
 #define SENSOR_REPORTID_AR_VR_STABILIZED_ROTATION_VECTOR 0x28
 #define SENSOR_REPORTID_AR_VR_STABILIZED_GAME_ROTATION_VECTOR 0x29
@@ -181,6 +182,7 @@ public:
 	bool enableGyro(uint16_t timeBetweenReports = 10);
 	bool enableUncalibratedGyro(uint16_t timeBetweenReports = 10);
 	bool enableMagnetometer(uint16_t timeBetweenReports = 10);
+	bool enableShakeDetector(uint16_t timeBetweenReports = 10);
 	bool enableTapDetector(uint16_t timeBetweenReports);
 	bool enableStepCounter(uint16_t timeBetweenReports = 10);
 	bool enableStabilityClassifier(uint16_t timeBetweenReports = 10);
@@ -258,6 +260,7 @@ public:
 	bool clearTare();
 	
 	uint8_t getTapDetector();
+	uint16_t getShakeDetector();
 	uint64_t getTimeStamp();
 	uint16_t getStepCount();
 	uint8_t getStabilityClassifier();
