@@ -46,7 +46,7 @@
 
 #include "SparkFun_BNO08x_Arduino_Library.h" // CTRL+Click here to get the library: http://librarymanager/All#SparkFun_BNO08x
 
-BNO08x myIMU;
+SfeBNO08xArdI2C myIMU;
 
 // For the most reliable interaction with the SHTP bus, we need
 // to use hardware reset control, and to monitor the H_INT pin.

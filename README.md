@@ -36,11 +36,23 @@ Original BNO080 Library improvements:
 
 
 
+Library Structure
+-----------------
+
+Starting with version 2.0, this library is built on the [SparkFun Toolkit](https://github.com/sparkfun/SparkFun_Toolkit), which must also be installed (the Arduino Library Manager installs it automatically).
+
+* **SfeBNO08xArdI2C** - Use the BNO08x over I<sup>2</sup>C: `myIMU.begin(address, Wire, intPin, rstPin)`
+* **SfeBNO08xArdSPI** - Use the BNO08x over SPI: `myIMU.begin(csPin, intPin, rstPin)`
+* **BNO08x** - Retained for compatibility with earlier releases. Provides `begin()` for I<sup>2</sup>C and `beginSPI()` for SPI.
+
+The device logic lives in the platform independent class `sfDevBNO08x` (`src/sfTk/sfDevBNO08x.h`), which talks to the sensor through a Toolkit bus. The BNO08x reads data without a register address and uses INT/RST pins, neither of which the Toolkit bus interface provides, so a platform layer supplies these by implementing the protected `readBusData()`, `hasInterruptPin()`, `interruptAsserted()`, `hasResetPin()` and `setResetPin()` methods. The Arduino classes in `src/SparkFun_BNO08x_Arduino_Library.h` show how.
+
 Repository Contents
 -------------------
 
 * **/examples** - Example sketches for the library (.ino). Run these from the Arduino IDE.
-* **/src** - Source files for the library (.cpp, .h).
+* **/src** - Arduino interface for the library (.h).
+* **/src/sfTk** - Platform independent driver and the CEVA SH2 sensor hub driver (.cpp, .c, .h).
 * **keywords.txt** - Keywords from this library that will be highlighted in the Arduino IDE.
 * **library.properties** - General library properties for the Arduino package manager.
 * **[CONTRIBUTING.md](./CONTRIBUTING.md)** - guidance on how to contribute to this library.

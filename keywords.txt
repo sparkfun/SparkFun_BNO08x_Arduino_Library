@@ -7,6 +7,9 @@
 #######################################
 
 BNO08x	KEYWORD1
+SfeBNO08xArdI2C	KEYWORD1
+SfeBNO08xArdSPI	KEYWORD1
+sfDevBNO08x	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
@@ -143,6 +146,12 @@ getRoll	KEYWORD2
 getPitch	KEYWORD2
 getYaw	KEYWORD2
 
+setCommunicationBus	KEYWORD2
+setMaxTransferSize	KEYWORD2
+getDeviceAddress	KEYWORD2
+
 #######################################
 # Constants (LITERAL1)
 #######################################
+kBNO08xDefaultAddress	LITERAL1
+kBNO08xAltAddress	LITERAL1

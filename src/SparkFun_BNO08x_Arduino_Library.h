@@ -1,344 +1,397 @@
-/*
-  This is a library written for the BNO08x
-  SparkFun sells these at its website: www.sparkfun.com
-  Do you like this library? Help support SparkFun. Buy a board!
-  https://www.sparkfun.com/products/14686
-
-  Originally written by Nathan Seidle @ SparkFun Electronics, December 28th, 2017
-
-  Adjusted by Pete Lewis @ SparkFun Electronics, June 2023 to incorporate the 
-  CEVA Sensor Hub Driver, found here:
-  https://github.com/ceva-dsp/sh2
-
-  Also, utilizing code from the Adafruit BNO08x Arduino Library by Bryan Siepert 
-  for Adafruit Industries. Found here:
-  https://github.com/adafruit/Adafruit_BNO08x
-
-  Also, utilizing I2C and SPI read/write functions and code from the Adafruit 
-  BusIO library found here:
-  https://github.com/adafruit/Adafruit_BusIO
-
-  The BNO08x IMU is a powerful triple axis gyro/accel/magnetometer coupled with an ARM processor
-  to maintain and complete all the complex calculations for various VR, inertial, step counting,
-  and movement operations.
-
-  This library handles the initialization of the BNO08x and is able to query the sensor
-  for different readings.
-
-  https://github.com/sparkfun/SparkFun_BNO08x_Arduino_Library
-
-  Development environment specifics:
-  Arduino IDE 2.1.1
-
-  SparkFun code, firmware, and software is released under the MIT License.
-  Please see LICENSE.md for further details.
-
-  Some of this library was based off of the Adafruit BNO08x Arduino Library.
-  More specifically, the code layers connecting to the HillCrest/Ceva Driver.
-  Their original work can be found here:
-  https://github.com/adafruit/Adafruit_BNO08x
-  Thank you Adafruit and your developers for all your hard work put into your Library!
-*/
-
-#include "sh2.h"
-#include "sh2_SensorValue.h"
-#include "sh2_err.h"
+/**
+ * @file SparkFun_BNO08x_Arduino_Library.h
+ * @brief Arduino-specific implementation for the SparkFun BNO08x IMU.
+ *
+ * @details
+ * This file provides the Arduino-specific implementation of the BNO08x driver classes. The classes
+ * inherit from the platform independent sfDevBNO08x class and implement the I2C and SPI communication
+ * using the SparkFun Toolkit Arduino bus classes, plus the INT and RST pin handling.
+ *
+ * Key features:
+ * - Arduino I2C and SPI initialization
+ * - INT and RST pin handling
+ * - Connection verification
+ * - Toolkit integration
+ *
+ * @section Class Classes
+ * - SfeBNO08xArdI2C: BNO08x connected over I2C
+ * - SfeBNO08xArdSPI: BNO08x connected over SPI
+ * - BNO08x: Compatibility class providing the begin()/beginSPI() interface of earlier releases
+ *
+ * @section Dependencies Dependencies
+ * - Arduino.h
+ * - SparkFun_Toolkit.h
+ * - sfDevBNO08x.h
+ *
+ * @author SparkFun Electronics
+ * @date 2025
+ * @copyright Copyright (c) 2023-2025, SparkFun Electronics Inc. All rights reserved.
+ *
+ * @section License License
+ * SPDX-License-Identifier: MIT
+ *
+ * @see https://github.com/sparkfun/SparkFun_BNO08x_Arduino_Library
+ */
 
 #pragma once
 
-#if (ARDUINO >= 100)
-#include "Arduino.h"
-#else
-#include "WProgram.h"
-#endif
+// clang-format off
+#include <SparkFun_Toolkit.h>
+#include "sfTk/sfDevBNO08x.h"
+#include <Arduino.h>
+// clang-format on
 
-#include <Wire.h>
-#include <SPI.h>
+///////////////////////////////////////////////////////////////////////////////
+// Bus classes
+//
+// The BNO08x SHTP protocol reads data without first sending a register address,
+// which the Toolkit bus interface does not provide. These classes extend the
+// Toolkit Arduino buses with that raw read.
+///////////////////////////////////////////////////////////////////////////////
 
-//The default I2C address for the BNO08x on the SparkFun breakout is 0x4B. 0x4A is also possible.
-#define BNO08x_DEFAULT_ADDRESS 0x4B
-
-//Platform specific configurations
-
-//Define the size of the I2C buffer based on the platform the user has
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__)
-
-//I2C_BUFFER_LENGTH is defined in Wire.H
-#define I2C_BUFFER_LENGTH 32
-
-//#else
-
-//The catch-all default is 32
-//#define I2C_BUFFER_LENGTH 32
-
-#endif
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-
-//All the ways we can configure or talk to the BNO08x, figure 34, page 36 reference manual
-//These are used for low level communication with the sensor, on channel 2
-#define SHTP_REPORT_COMMAND_RESPONSE 0xF1
-#define SHTP_REPORT_COMMAND_REQUEST 0xF2
-#define SHTP_REPORT_FRS_READ_RESPONSE 0xF3
-#define SHTP_REPORT_FRS_READ_REQUEST 0xF4
-#define SHTP_REPORT_PRODUCT_ID_RESPONSE 0xF8
-#define SHTP_REPORT_PRODUCT_ID_REQUEST 0xF9
-#define SHTP_REPORT_BASE_TIMESTAMP 0xFB
-#define SHTP_REPORT_SET_FEATURE_COMMAND 0xFD
-
-//All the different sensors and features we can get reports from
-//These are used when enabling a given sensor
-#define SENSOR_REPORTID_ACCELEROMETER SH2_ACCELEROMETER
-#define SENSOR_REPORTID_GYROSCOPE_CALIBRATED SH2_GYROSCOPE_CALIBRATED
-#define SENSOR_REPORTID_MAGNETIC_FIELD SH2_MAGNETIC_FIELD_CALIBRATED
-#define SENSOR_REPORTID_LINEAR_ACCELERATION SH2_LINEAR_ACCELERATION
-#define SENSOR_REPORTID_ROTATION_VECTOR SH2_ROTATION_VECTOR
-#define SENSOR_REPORTID_GRAVITY SH2_GRAVITY
-#define SENSOR_REPORTID_UNCALIBRATED_GYRO SH2_GYROSCOPE_UNCALIBRATED
-#define SENSOR_REPORTID_GAME_ROTATION_VECTOR 0x08
-#define SENSOR_REPORTID_GEOMAGNETIC_ROTATION_VECTOR 0x09
-#define SENSOR_REPORTID_GYRO_INTEGRATED_ROTATION_VECTOR SH2_GYRO_INTEGRATED_RV
-#define SENSOR_REPORTID_TAP_DETECTOR 0x10
-#define SENSOR_REPORTID_STEP_COUNTER SH2_STEP_COUNTER
-#define SENSOR_REPORTID_STABILITY_CLASSIFIER SH2_STABILITY_CLASSIFIER
-#define SENSOR_REPORTID_RAW_ACCELEROMETER 0x14
-#define SENSOR_REPORTID_RAW_GYROSCOPE 0x15
-#define SENSOR_REPORTID_RAW_MAGNETOMETER 0x16
-#define SENSOR_REPORTID_PERSONAL_ACTIVITY_CLASSIFIER SH2_PERSONAL_ACTIVITY_CLASSIFIER
-#define SENSOR_REPORTID_AR_VR_STABILIZED_ROTATION_VECTOR 0x28
-#define SENSOR_REPORTID_AR_VR_STABILIZED_GAME_ROTATION_VECTOR 0x29
-
-// Reset complete packet (BNO08X Datasheet p.24 Figure 1-27)
-#define EXECUTABLE_RESET_COMPLETE 0x1
-
-//Command IDs from section 6.4, page 42
-//These are used to calibrate, initialize, set orientation, tare etc the sensor
-#define COMMAND_ERRORS 1
-#define COMMAND_COUNTER 2
-#define COMMAND_TARE 3
-#define COMMAND_INITIALIZE 4
-#define COMMAND_DCD 6
-#define COMMAND_ME_CALIBRATE 7
-#define COMMAND_DCD_PERIOD_SAVE 9
-#define COMMAND_OSCILLATOR 10
-#define COMMAND_CLEAR_DCD 11
-
-#define CALIBRATE_ACCEL 0
-#define CALIBRATE_GYRO 1
-#define CALIBRATE_MAG 2
-#define CALIBRATE_PLANAR_ACCEL 3
-#define CALIBRATE_ACCEL_GYRO_MAG 4
-#define CALIBRATE_STOP 5
-
-#define TARE_AXIS_ALL 0x07
-#define TARE_AXIS_Z   0x04
-
-#define TARE_ROTATION_VECTOR 0
-#define TARE_GAME_ROTATION_VECTOR 1
-#define TARE_GEOMAGNETIC_ROTATION_VECTOR 2
-#define TARE_GYRO_INTEGRATED_ROTATION_VECTOR 3
-#define TARE_AR_VR_STABILIZED_ROTATION_VECTOR 4
-#define TARE_AR_VR_STABILIZED_GAME_ROTATION_VECTOR 5
-
-class BNO08x
+/**
+ * @class SfeBNO08xI2CBus
+ * @brief Toolkit Arduino I2C bus with a register-less read.
+ */
+class SfeBNO08xI2CBus : public sfTkArdI2C
 {
-public:
-	boolean begin(uint8_t deviceAddress = BNO08x_DEFAULT_ADDRESS, TwoWire &wirePort = Wire, int8_t user_INTPin = -1, int8_t user_RSTPin = -1); //By default use the default I2C addres, and use Wire port
-	boolean beginSPI(uint8_t user_CSPin, uint8_t user_INTPin, uint8_t user_RSTPin, uint32_t spiPortSpeed = 1000000, SPIClass &spiPort = SPI);
-	boolean isConnected();
+  public:
+    /**
+     * @brief Read bytes from the device in a single I2C transaction, with no register address.
+     *
+     * @param data Buffer to read into
+     * @param length Number of bytes to read. Must not exceed bufferChunkSize().
+     * @return ksfTkErrOk on success, otherwise an error code.
+     */
+    sfTkError_t readData(uint8_t *data, size_t length)
+    {
+        if (!_i2cPort)
+            return ksfTkErrBusNotInit;
 
-    sh2_ProductIds_t prodIds; ///< The product IDs returned by the sensor
-	sh2_SensorValue_t sensorValue;
+        if ((size_t)_i2cPort->requestFrom((int)address(), (int)length, (int)true) != length)
+            return ksfTkErrBusUnderRead;
 
-    void hardwareReset(void);
-    bool wasReset(void); //Returns true if the sensor has reported a reset. Reading this will unflag the reset.
+        for (size_t i = 0; i < length; i++)
+            data[i] = _i2cPort->read();
 
-	uint8_t getResetReason(); // returns prodIds->resetCause
+        return ksfTkErrOk;
+    }
+};
 
-    bool enableReport(sh2_SensorId_t sensor, uint32_t interval_us = 10000, uint32_t sensorSpecific = 0);
-    bool getSensorEvent();
-	uint8_t getSensorEventID();
+/**
+ * @class SfeBNO08xSPIBus
+ * @brief Toolkit Arduino SPI bus with a register-less read.
+ */
+class SfeBNO08xSPIBus : public sfTkArdSPI
+{
+  public:
+    using sfTkArdSPI::init;
 
-	void enableDebugging(Stream &debugPort = Serial); //Turn on debug printing. If user doesn't specify then Serial will be used.
+    /**
+     * @brief Initialize the bus with the BNO08x SPI settings (mode 3, MSB first) and deselect the device.
+     *
+     * @param csPin Chip select pin
+     * @param spiPortSpeed SPI clock speed in Hz - limited to 3MHz, the BNO08x maximum
+     * @param spiPort SPIClass instance to use for SPI communication
+     * @return ksfTkErrOk on success, otherwise an error code.
+     */
+    sfTkError_t init(uint8_t csPin, uint32_t spiPortSpeed, SPIClass &spiPort)
+    {
+        if (spiPortSpeed > 3000000)
+            spiPortSpeed = 3000000; // BNO08x max is 3MHz
 
-	bool softReset();	  //Try to reset the IMU via software
-	bool serviceBus(void);	
-	uint8_t resetReason(); //Query the IMU for the reason it last reset
-	bool modeOn();	  //Use the executable channel to turn the BNO on
-	bool modeSleep();	  //Use the executable channel to put the BNO to sleep
+        SPISettings spiSettings(spiPortSpeed, MSBFIRST, SPI_MODE3);
 
-	float qToFloat(int16_t fixedPointValue, uint8_t qPoint); //Given a Q value, converts fixed point floating to regular floating point number
+        pinMode(csPin, OUTPUT);
+        digitalWrite(csPin, HIGH); // Deselect the BNO08x
 
-	bool enableRotationVector(uint16_t timeBetweenReports = 10);
-	bool enableGeomagneticRotationVector(uint16_t timeBetweenReports = 10);
-	bool enableGameRotationVector(uint16_t timeBetweenReports = 10);
-	bool enableARVRStabilizedRotationVector(uint16_t timeBetweenReports);
-	bool enableARVRStabilizedGameRotationVector(uint16_t timeBetweenReports);
-	bool enableAccelerometer(uint16_t timeBetweenReports = 10);
-	bool enableLinearAccelerometer(uint16_t timeBetweenReports = 10);
-	bool enableGravity(uint16_t timeBetweenReports = 10);
-	bool enableGyro(uint16_t timeBetweenReports = 10);
-	bool enableUncalibratedGyro(uint16_t timeBetweenReports = 10);
-	bool enableMagnetometer(uint16_t timeBetweenReports = 10);
-	bool enableTapDetector(uint16_t timeBetweenReports);
-	bool enableStepCounter(uint16_t timeBetweenReports = 10);
-	bool enableStabilityClassifier(uint16_t timeBetweenReports = 10);
-	bool enableActivityClassifier(uint16_t timeBetweenReports, uint32_t activitiesToEnable);
-	bool enableRawAccelerometer(uint16_t timeBetweenReports = 10);
-	bool enableRawGyro(uint16_t timeBetweenReports = 10);
-	bool enableRawMagnetometer(uint16_t timeBetweenReports = 10);
-	bool enableGyroIntegratedRotationVector(uint16_t timeBetweenReports = 10);
+        return init(spiPort, spiSettings, csPin, true);
+    }
 
-	void getQuat(float &i, float &j, float &k, float &real, float &radAccuracy, uint8_t &accuracy);
-	float getQuatI();
-	float getQuatJ();
-	float getQuatK();
-	float getQuatReal();
-	float getQuatRadianAccuracy();
-	uint8_t getQuatAccuracy();
+    /**
+     * @brief Read bytes from the device in a single SPI transaction, clocking out zeros.
+     *
+     * @param data Buffer to read into
+     * @param length Number of bytes to read
+     * @return ksfTkErrOk on success, otherwise an error code.
+     */
+    sfTkError_t readData(uint8_t *data, size_t length)
+    {
+        if (!_spiPort)
+            return ksfTkErrBusNotInit;
 
-	float getGameQuatI();
-	float getGameQuatJ();
-	float getGameQuatK();
-	float getGameQuatReal();	
+        memset(data, 0, length);
 
-	void getAccel(float &x, float &y, float &z, uint8_t &accuracy);
-	float getAccelX();
-	float getAccelY();
-	float getAccelZ();
-	uint8_t getAccelAccuracy();
+        _spiPort->beginTransaction(_sfeSPISettings);
+        digitalWrite(cs(), LOW);
 
-	void getLinAccel(float &x, float &y, float &z, uint8_t &accuracy);
-	float getLinAccelX();
-	float getLinAccelY();
-	float getLinAccelZ();
-	uint8_t getLinAccelAccuracy();
+        _spiPort->transfer(data, length);
 
-	void getGyro(float &x, float &y, float &z, uint8_t &accuracy);
-	float getGyroX();
-	float getGyroY();
-	float getGyroZ();
-	uint8_t getGyroAccuracy();
+        digitalWrite(cs(), HIGH);
+        _spiPort->endTransaction();
 
-	void getUncalibratedGyro(float &x, float &y, float &z, float &bx, float &by, float &bz, uint8_t &accuracy);
-	float getUncalibratedGyroX();
-	float getUncalibratedGyroY();
-	float getUncalibratedGyroZ();
-	float getUncalibratedGyroBiasX();
-	float getUncalibratedGyroBiasY();
-	float getUncalibratedGyroBiasZ();
-	uint8_t getUncalibratedGyroAccuracy();
+        return ksfTkErrOk;
+    }
+};
 
-	float getGyroIntegratedRVI();
-	float getGyroIntegratedRVJ();
-	float getGyroIntegratedRVK();
-	float getGyroIntegratedRVReal();
-	float getGyroIntegratedRVangVelX();
-	float getGyroIntegratedRVangVelY();
-	float getGyroIntegratedRVangVelZ();
+///////////////////////////////////////////////////////////////////////////////
+// Device classes
+///////////////////////////////////////////////////////////////////////////////
 
-	void getMag(float &x, float &y, float &z, uint8_t &accuracy);
-	float getMagX();
-	float getMagY();
-	float getMagZ();
-	uint8_t getMagAccuracy();
+/**
+ * @class SfeBNO08xArdBase
+ * @brief Arduino base for the BNO08x classes - INT/RST pin handling.
+ *
+ * @details
+ * Implements the GPIO hooks of sfDevBNO08x using the Arduino pin API.
+ */
+class SfeBNO08xArdBase : public sfDevBNO08x
+{
+  protected:
+    SfeBNO08xArdBase() : _intPin{-1}, _rstPin{-1}
+    {
+    }
 
-	void getGravity(float &x, float &y, float &z, uint8_t &accuracy);
-	float getGravityX();
-	float getGravityY();
-	float getGravityZ();
-	uint8_t getGravityAccuracy();
+    /**
+     * @brief Set the INT and RST pins. The INT pin is configured as an input with pullup.
+     *
+     * @param intPin INT pin, or -1 if not connected
+     * @param rstPin RST pin, or -1 if not connected
+     * @param rstPinMode Initial pin mode for the RST pin
+     */
+    void setPins(int8_t intPin, int8_t rstPin, uint8_t rstPinMode)
+    {
+        _intPin = intPin;
+        if (_intPin != -1)
+            pinMode(_intPin, INPUT_PULLUP);
 
-	bool setCalibrationConfig(uint8_t sensors);
-	bool saveCalibration();
+        _rstPin = rstPin;
+        if (_rstPin != -1)
+            pinMode(_rstPin, rstPinMode);
+    }
 
-	bool tareNow(bool zAxis=false, sh2_TareBasis_t basis=SH2_TARE_BASIS_ROTATION_VECTOR);
-	bool saveTare();
-	bool clearTare();
-	
-	uint8_t getTapDetector();
-	uint64_t getTimeStamp();
-	uint16_t getStepCount();
-	uint8_t getStabilityClassifier();
-	uint8_t getActivityClassifier();
-	uint8_t getActivityConfidence(uint8_t activity);
+    bool hasInterruptPin(void) override
+    {
+        return _intPin != -1;
+    }
 
-	int16_t getRawAccelX();
-	int16_t getRawAccelY();
-	int16_t getRawAccelZ();
+    bool interruptAsserted(void) override
+    {
+        return digitalRead(_intPin) == LOW;
+    }
 
-	int16_t getRawGyroX();
-	int16_t getRawGyroY();
-	int16_t getRawGyroZ();
+    bool hasResetPin(void) override
+    {
+        return _rstPin != -1;
+    }
 
-	int16_t getRawMagX();
-	int16_t getRawMagY();
-	int16_t getRawMagZ();
+    void setResetPin(bool high) override
+    {
+        pinMode(_rstPin, OUTPUT);
+        digitalWrite(_rstPin, high ? HIGH : LOW);
+    }
 
-	float getRoll();
-	float getPitch();
-	float getYaw();
+  private:
+    int8_t _intPin;
+    int8_t _rstPin;
+};
 
-//	void sendCommand(uint8_t command);
-//	void sendCalibrateCommand(uint8_t thingToCalibrate);
+/**
+ * @class SfeBNO08xArdI2C
+ * @brief Arduino I2C implementation for the BNO08x IMU.
+ *
+ * Example usage:
+ * @code
+ * SfeBNO08xArdI2C myIMU;
+ * if (myIMU.begin(kBNO08xDefaultAddress, Wire, BNO08X_INT, BNO08X_RST)) {
+ *     // Sensor initialized successfully
+ * }
+ * @endcode
+ *
+ * @note This class uses the Arduino Wire library for I2C communication
+ *
+ * @see sfDevBNO08x
+ */
+class SfeBNO08xArdI2C : public SfeBNO08xArdBase
+{
+  public:
+    SfeBNO08xArdI2C()
+    {
+    }
 
-	//Metadata functions
-	// int16_t getQ1(uint16_t recordID);
-	// int16_t getQ2(uint16_t recordID);
-	// int16_t getQ3(uint16_t recordID);
-	// float getResolution(uint16_t recordID);
-	// float getRange(uint16_t recordID);
-	// uint32_t readFRSword(uint16_t recordID, uint8_t wordNumber);
-	// void frsReadRequest(uint16_t recordID, uint16_t readOffset, uint16_t blockSize);
-	// bool readFRSdata(uint16_t recordID, uint8_t startLocation, uint8_t wordsToRead);
+    /**
+     * @brief Initializes the BNO08x with I2C communication.
+     *
+     * @param address I2C address of the device (default: kBNO08xDefaultAddress)
+     * @param wirePort TwoWire instance to use for I2C communication (default: Wire)
+     * @param intPin INT pin, or -1 if not connected (connecting it is recommended)
+     * @param rstPin RST pin, or -1 if not connected (connecting it is recommended)
+     *
+     * @return true If initialization successful
+     * @return false If any initialization step fails
+     */
+    bool begin(const uint8_t address = kBNO08xDefaultAddress, TwoWire &wirePort = Wire, int8_t intPin = -1,
+               int8_t rstPin = -1)
+    {
+        if (_theI2CBus.init(wirePort, address) != ksfTkErrOk)
+            return false;
 
-	//Global Variables
-	// uint8_t shtpHeader[4]; //Each packet has a header of 4 bytes
-	// uint8_t shtpData[MAX_PACKET_SIZE];
-	// uint8_t sequenceNumber[6] = {0, 0, 0, 0, 0, 0}; //There are 6 com channels. Each channel has its own seqnum
-	// uint8_t commandSequenceNumber = 0;				//Commands have a seqNum as well. These are inside command packet, the header uses its own seqNum per channel
-	// uint32_t metaData[MAX_METADATA_SIZE];			//There is more than 10 words in a metadata record but we'll stop at Q point 3
+        setPins(intPin, rstPin, INPUT_PULLUP);
 
-//	unsigned long _spiPortSpeed; //Optional user defined port speed
-//	uint8_t _cs;				 //Pins needed for SPI
+        setCommunicationBus(&_theI2CBus);
 
-private:
+        // Limit transfers to what the Wire buffer can hold
+        setMaxTransferSize(_theI2CBus.bufferChunkSize());
 
-	Stream *_debugPort;			 //The stream to send debug messages to if enabled. Usually Serial.
-	boolean _printDebug = false; //Flag to print debugging variables
+        // Give the device a chance to come up before checking for it
+        waitForInterrupt();
 
-	//These are the raw sensor values (without Q applied) pulled from the user requested Input Report
-	uint16_t rawAccelX, rawAccelY, rawAccelZ, accelAccuracy;
-	uint16_t rawLinAccelX, rawLinAccelY, rawLinAccelZ, accelLinAccuracy;
-	uint16_t rawGyroX, rawGyroY, rawGyroZ, gyroAccuracy;
-	uint16_t rawUncalibGyroX, rawUncalibGyroY, rawUncalibGyroZ, rawBiasX, rawBiasY, rawBiasZ, UncalibGyroAccuracy;
-	uint16_t rawMagX, rawMagY, rawMagZ, magAccuracy;
-	uint16_t rawQuatI, rawQuatJ, rawQuatK, rawQuatReal, rawQuatRadianAccuracy, quatAccuracy;
-	uint16_t rawFastGyroX, rawFastGyroY, rawFastGyroZ;
-	uint16_t gravityX, gravityY, gravityZ, gravityAccuracy;
-	uint8_t tapDetector;
-	uint16_t stepCount;
-	uint32_t timeStamp;
-	uint8_t stabilityClassifier;
-	uint8_t activityClassifier;
-	uint8_t calibrationStatus;							  //Byte R0 of ME Calibration Response
-	uint16_t memsRawAccelX, memsRawAccelY, memsRawAccelZ; //Raw readings from MEMS sensor
-	uint16_t memsRawGyroX, memsRawGyroY, memsRawGyroZ;	//Raw readings from MEMS sensor
-	uint16_t memsRawMagX, memsRawMagY, memsRawMagZ;		  //Raw readings from MEMS sensor
+        if (!isConnected())
+            return false;
 
-	//These Q values are defined in the datasheet but can also be obtained by querying the meta data records
-	//See the read metadata example for more info
-	int16_t rotationVector_Q1 = 14;
-	int16_t rotationVectorAccuracy_Q1 = 12; //Heading accuracy estimate in radians. The Q point is 12.
-	int16_t accelerometer_Q1 = 8;
-	int16_t linear_accelerometer_Q1 = 8;
-	int16_t gyro_Q1 = 9;
-	int16_t magnetometer_Q1 = 4;
-	int16_t angular_velocity_Q1 = 10;
-	int16_t gravity_Q1 = 8;
+        return sfDevBNO08x::begin();
+    }
 
-protected:
-	virtual bool _init(int32_t sensor_id = 0);
-	sh2_Hal_t _HAL; ///< The struct representing the SH2 Hardware Abstraction Layer
+    /**
+     * @brief Checks if the BNO08x is connected and responding.
+     *
+     * @return true If device responds to a ping at the current I2C address
+     */
+    bool isConnected(void)
+    {
+        return _theI2CBus.ping() == ksfTkErrOk;
+    }
+
+    /**
+     * @brief Gets the currently configured I2C address of the BNO08x.
+     *
+     * @return uint8_t The current I2C address
+     */
+    uint8_t getDeviceAddress(void)
+    {
+        return _theI2CBus.address();
+    }
+
+  protected:
+    sfTkError_t readBusData(uint8_t *data, size_t length) override
+    {
+        return _theI2CBus.readData(data, length);
+    }
+
+  private:
+    SfeBNO08xI2CBus _theI2CBus;
+};
+
+/**
+ * @class SfeBNO08xArdSPI
+ * @brief Arduino SPI implementation for the BNO08x IMU.
+ *
+ * Example usage:
+ * @code
+ * SfeBNO08xArdSPI myIMU;
+ * if (myIMU.begin(BNO08X_CS, BNO08X_INT, BNO08X_RST)) {
+ *     // Sensor initialized successfully
+ * }
+ * @endcode
+ *
+ * @note The INT pin is required when using SPI.
+ *
+ * @see sfDevBNO08x
+ */
+class SfeBNO08xArdSPI : public SfeBNO08xArdBase
+{
+  public:
+    SfeBNO08xArdSPI()
+    {
+    }
+
+    /**
+     * @brief Initializes the BNO08x with SPI communication.
+     *
+     * @param csPin Chip select pin
+     * @param intPin INT pin
+     * @param rstPin RST pin
+     * @param spiPortSpeed SPI clock speed in Hz (default: 1MHz, max: 3MHz)
+     * @param spiPort SPIClass instance to use for SPI communication (default: SPI)
+     *
+     * @return true If initialization successful
+     * @return false If any initialization step fails
+     */
+    bool begin(uint8_t csPin, uint8_t intPin, uint8_t rstPin, uint32_t spiPortSpeed = 1000000,
+               SPIClass &spiPort = SPI)
+    {
+        if (_theSPIBus.init(csPin, spiPortSpeed, spiPort) != ksfTkErrOk)
+            return false;
+
+        setPins(intPin, rstPin, OUTPUT);
+
+        setCommunicationBus(&_theSPIBus);
+
+        return sfDevBNO08x::begin();
+    }
+
+  protected:
+    sfTkError_t readBusData(uint8_t *data, size_t length) override
+    {
+        return _theSPIBus.readData(data, length);
+    }
+
+  private:
+    SfeBNO08xSPIBus _theSPIBus;
+};
+
+/**
+ * @class BNO08x
+ * @brief Compatibility class with the interface of earlier releases of this library.
+ *
+ * @details
+ * Provides begin() for I2C (from SfeBNO08xArdI2C) and beginSPI() for SPI on a single class. New
+ * code should use SfeBNO08xArdI2C or SfeBNO08xArdSPI.
+ */
+class BNO08x : public SfeBNO08xArdI2C
+{
+  public:
+    BNO08x() : _usingSPI{false}
+    {
+    }
+
+    /// @brief Initializes the BNO08x with I2C communication. See SfeBNO08xArdI2C::begin().
+    bool begin(const uint8_t address = kBNO08xDefaultAddress, TwoWire &wirePort = Wire, int8_t intPin = -1,
+               int8_t rstPin = -1)
+    {
+        _usingSPI = false;
+        return SfeBNO08xArdI2C::begin(address, wirePort, intPin, rstPin);
+    }
+
+    /// @brief Initializes the BNO08x with SPI communication. See SfeBNO08xArdSPI::begin().
+    bool beginSPI(uint8_t user_CSPin, uint8_t user_INTPin, uint8_t user_RSTPin, uint32_t spiPortSpeed = 1000000,
+                  SPIClass &spiPort = SPI)
+    {
+        if (_theSPIBus.init(user_CSPin, spiPortSpeed, spiPort) != ksfTkErrOk)
+            return false;
+
+        _usingSPI = true;
+
+        setPins(user_INTPin, user_RSTPin, OUTPUT);
+
+        setCommunicationBus(&_theSPIBus);
+
+        return sfDevBNO08x::begin();
+    }
+
+    /// @brief Retained for compatibility - the library no longer prints debug output.
+    void enableDebugging(Stream &debugPort = Serial)
+    {
+        (void)debugPort;
+    }
+
+  protected:
+    sfTkError_t readBusData(uint8_t *data, size_t length) override
+    {
+        return _usingSPI ? _theSPIBus.readData(data, length) : SfeBNO08xArdI2C::readBusData(data, length);
+    }
+
+  private:
+    bool _usingSPI;
+    SfeBNO08xSPIBus _theSPIBus;
 };

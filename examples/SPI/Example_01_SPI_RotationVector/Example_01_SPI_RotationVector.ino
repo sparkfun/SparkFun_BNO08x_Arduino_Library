@@ -55,7 +55,7 @@
 //#include <Wire.h>
 
 #include "SparkFun_BNO08x_Arduino_Library.h"  // CTRL+Click here to get the library: http://librarymanager/All#SparkFun_BNO08x
-BNO08x myIMU;
+SfeBNO08xArdSPI myIMU;
 
 // For SPI, we need some extra pins defined:
 // Note, these can be other GPIO if you like.
@@ -81,7 +81,7 @@ void setup() {
   Serial.println();
   Serial.println("BNO08x Read Example");
 
-  if (myIMU.beginSPI(BNO08X_CS, BNO08X_INT, BNO08X_RST) == false) {
+  if (myIMU.begin(BNO08X_CS, BNO08X_INT, BNO08X_RST) == false) {
     Serial.println("BNO08x not detected. Check your jumpers and the hookup guide. Freezing...");
     while (1)
       ;
